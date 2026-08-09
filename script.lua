@@ -1,17 +1,23 @@
-local Players = game:GetService("Players")
+local Players = game.Players
 local RunService = game:GetService("RunService")
 local UserInput = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-local GuiParent = (gethui and gethui()) or CoreGui
+
+local GuiParent
+if gethui then
+    GuiParent = gethui()
+else
+    GuiParent = game:GetService("CoreGui")
+end
 
 pcall(function() 
     local old = GuiParent:FindFirstChild("NexusHub")
     if old then old:Destroy() end
 end)
 
-local Config = {WalkSpeed=16,JumpPower=50,InfJump=false,Noclip=false,FOV=90,FOVLocked=true,AntiAFK=true,AmbientBackup=game.Lighting.Ambient}
+local Config = {WalkSpeed=16,JumpPower=50,InfJump=false,Noclip=false,FOV=90,FOVLocked=true,AntiAFK=true}
+Config.AmbientBackup = game:GetService("Lighting").Ambient
 
 local function GetHum() 
     local c = LocalPlayer.Character 
@@ -45,7 +51,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 35)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "Nexus Hub | Bomb Tag"
+Title.Text = "Nexus Hub"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
 Title.TextColor3 = Color3.new(1, 1, 1)
@@ -62,8 +68,8 @@ Close.TextSize = 14
 Close.TextColor3 = Color3.new(1, 1, 1)
 Close.BorderSizePixel = 0
 Close.Parent = Main
-local cuic = Instance.new("UICorner")
-cuic.CornerRadius = UDim.new(0, 5)
+local cuic = Instance.new("UICorner") 
+cuic.CornerRadius = UDim.new(0, 5) 
 cuic.Parent = Close
 Close.MouseButton1Click:Connect(function() sg:Destroy() end)
 
@@ -87,7 +93,7 @@ local function AddToggle(name, def, cb)
     f.BackgroundColor3 = Color3.fromRGB(45, 25, 70)
     f.BorderSizePixel = 0
     f.Parent = Scroll
-    local fuic = Instance.new("UICorner") fuic.CornerRadius = UDim.new(0, 6) fuic.Parent = f
+    local u = Instance.new("UICorner") u.CornerRadius = UDim.new(0,6) u.Parent = f
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(1, -60, 1, 0)
     l.Position = UDim2.new(0, 15, 0, 0)
@@ -95,21 +101,21 @@ local function AddToggle(name, def, cb)
     l.Text = name
     l.Font = Enum.Font.Gotham
     l.TextSize = 13
-    l.TextColor3 = Color3.new(1, 1, 1)
+    l.TextColor3 = Color3.new(1,1,1)
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.Parent = f
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0, 35, 0, 18)
     b.Position = UDim2.new(1, -45, 0.5, -9)
-    b.BackgroundColor3 = def and Color3.fromRGB(170, 80, 255) or Color3.fromRGB(60, 40, 80)
+    b.BackgroundColor3 = def and Color3.fromRGB(170,80,255) or Color3.fromRGB(60,40,80)
     b.Text = ""
     b.BorderSizePixel = 0
     b.Parent = f
-    local buic = Instance.new("UICorner") buic.CornerRadius = UDim.new(1, 0) buic.Parent = b
+    local u2 = Instance.new("UICorner") u2.CornerRadius = UDim.new(1,0) u2.Parent = b
     local state = def
     b.MouseButton1Click:Connect(function()
         state = not state
-        b.BackgroundColor3 = state and Color3.fromRGB(170, 80, 255) or Color3.fromRGB(60, 40, 80)
+        b.BackgroundColor3 = state and Color3.fromRGB(170,80,255) or Color3.fromRGB(60,40,80)
         cb(state)
     end)
 end
@@ -120,7 +126,7 @@ local function AddSlider(name, min, max, def, cb)
     f.BackgroundColor3 = Color3.fromRGB(45, 25, 70)
     f.BorderSizePixel = 0
     f.Parent = Scroll
-    local fuic = Instance.new("UICorner") fuic.CornerRadius = UDim.new(0, 6) fuic.Parent = f
+    local u = Instance.new("UICorner") u.CornerRadius = UDim.new(0,6) u.Parent = f
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(1, -60, 0, 25)
     l.Position = UDim2.new(0, 15, 0, 3)
@@ -128,7 +134,7 @@ local function AddSlider(name, min, max, def, cb)
     l.Text = name
     l.Font = Enum.Font.Gotham
     l.TextSize = 13
-    l.TextColor3 = Color3.new(1, 1, 1)
+    l.TextColor3 = Color3.new(1,1,1)
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.Parent = f
     local v = Instance.new("TextLabel")
@@ -138,19 +144,19 @@ local function AddSlider(name, min, max, def, cb)
     v.Text = tostring(def)
     v.Font = Enum.Font.GothamBold
     v.TextSize = 13
-    v.TextColor3 = Color3.fromRGB(200, 100, 255)
+    v.TextColor3 = Color3.fromRGB(200,100,255)
     v.Parent = f
     local bar = Instance.new("Frame")
     bar.Size = UDim2.new(1, -30, 0, 5)
     bar.Position = UDim2.new(0, 15, 0, 35)
-    bar.BackgroundColor3 = Color3.fromRGB(60, 40, 80)
+    bar.BackgroundColor3 = Color3.fromRGB(60,40,80)
     bar.Parent = f
-    local buic = Instance.new("UICorner") buic.CornerRadius = UDim.new(1, 0) buic.Parent = bar
+    local u2 = Instance.new("UICorner") u2.CornerRadius = UDim.new(1,0) u2.Parent = bar
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new((def-min)/(max-min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(170, 80, 255)
+    fill.BackgroundColor3 = Color3.fromRGB(170,80,255)
     fill.Parent = bar
-    local fuic2 = Instance.new("UICorner") fuic2.CornerRadius = UDim.new(1, 0) fuic2.Parent = fill
+    local u3 = Instance.new("UICorner") u3.CornerRadius = UDim.new(1,0) u3.Parent = fill
     local drag = false
     bar.InputBegan:Connect(function(i) 
         if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true end 
@@ -187,12 +193,13 @@ AddToggle("Lock FOV", true, function(v) Config.FOVLocked = v end)
 AddToggle("Infinite Jump", false, function(v) Config.InfJump = v end)
 AddToggle("Noclip", false, function(v) Config.Noclip = v end)
 AddToggle("Fullbright", false, function(v)
+    local lt = game:GetService("Lighting")
     if v then
-        game.Lighting.Ambient = Color3.new(1, 1, 1)
-        game.Lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
-        game.Lighting.ColorShift_Top = Color3.new(1, 1, 1)
+        lt.Ambient = Color3.new(1,1,1)
+        lt.ColorShift_Bottom = Color3.new(1,1,1)
+        lt.ColorShift_Top = Color3.new(1,1,1)
     else
-        game.Lighting.Ambient = Config.AmbientBackup
+        lt.Ambient = Config.AmbientBackup
     end
 end)
 AddToggle("Anti-AFK", true, function(v) Config.AntiAFK = v end)
@@ -239,4 +246,6 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     h.JumpPower = Config.JumpPower
 end)
 
-game.StarterGui:SetCore("SendNotification", {Title = "Nexus Hub", Text = "Loaded! RightShift = hide", Duration = 5})
+pcall(function()
+    game.StarterGui:SetCore("SendNotification", {Title = "Nexus Hub", Text = "Loaded! RightShift = hide", Duration = 5})
+end)
