@@ -1,4 +1,4 @@
--- ⚡ Kloud Hub v4.3 | Full + God Rays
+-- ⚡ Kloud Hub v4.4 | Full + Old Visuals
 local Players = game.Players or game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInput = game:GetService("UserInputService")
@@ -36,6 +36,7 @@ local Config = {
     SpeedGlitch=false, SpeedGlitchAmount=30, Particles=false,
     AutoDodgeBomb=false, AutoPassBomb=false,
     Reflections=false, GodRays=false, MotionBlur=false, Saturation=0, FireBorder=false,
+    SoftBlur=false, ColorFilter=false, StrongBloom=false,
     TriggerBot=false, TriggerBotRange=30,
     AimbotV1=false, AimbotPart="Head", AimbotV2=false,
     RoleESP=false,
@@ -317,7 +318,6 @@ local function StartFly()
 end
 local function StopFly() if flyBV then flyBV:Destroy() flyBV = nil end if flyBG then flyBG:Destroy() flyBG = nil end end
 
--- God Rays (Minecraft-style shaders)
 local function SetGodRays(s)
     Config.GodRays = s
     if s then
@@ -327,18 +327,15 @@ local function SetGodRays(s)
         bloom.Name = "KloudLightBloom" bloom.Intensity = 0.8 bloom.Size = 30 bloom.Threshold = 0.7
         local dof = Lighting:FindFirstChild("KloudDOF") or Instance.new("DepthOfFieldEffect", Lighting)
         dof.Name = "KloudDOF" dof.FarIntensity = 0.1 dof.FocusDistance = 50 dof.InFocusRadius = 30 dof.NearIntensity = 0
-        Lighting.GlobalShadows = true
-        Lighting.Brightness = 2
-        Lighting.EnvironmentDiffuseScale = 0.5
-        Lighting.EnvironmentSpecularScale = 0.5
+        Lighting.GlobalShadows = true Lighting.Brightness = 2
+        Lighting.EnvironmentDiffuseScale = 0.5 Lighting.EnvironmentSpecularScale = 0.5
         Lighting.ExposureCompensation = 0.3
     else
         local sr = Lighting:FindFirstChild("KloudGodRays") if sr then sr:Destroy() end
         local bloom = Lighting:FindFirstChild("KloudLightBloom") if bloom then bloom:Destroy() end
         local dof = Lighting:FindFirstChild("KloudDOF") if dof then dof:Destroy() end
         Lighting.Brightness = Config.BrightnessBackup
-        Lighting.EnvironmentDiffuseScale = 0
-        Lighting.EnvironmentSpecularScale = 0
+        Lighting.EnvironmentDiffuseScale = 0 Lighting.EnvironmentSpecularScale = 0
         Lighting.ExposureCompensation = 0
     end
 end
@@ -360,6 +357,36 @@ local function SetMotionBlur(enabled)
         blur.Name = "KloudMotionBlur" blur.Size = 0
     else
         local blur = Lighting:FindFirstChild("KloudMotionBlur") if blur then blur:Destroy() end
+    end
+end
+
+local function SetSoftBlur(s)
+    Config.SoftBlur = s
+    if s then
+        local b = Lighting:FindFirstChild("KloudSoftBlur") or Instance.new("BlurEffect", Lighting)
+        b.Name = "KloudSoftBlur" b.Size = 4
+    else
+        local b = Lighting:FindFirstChild("KloudSoftBlur") if b then b:Destroy() end
+    end
+end
+
+local function SetColorFilter(s)
+    Config.ColorFilter = s
+    if s then
+        local cc = Lighting:FindFirstChild("KloudColorFilter") or Instance.new("ColorCorrectionEffect", Lighting)
+        cc.Name = "KloudColorFilter" cc.Contrast = 0.2 cc.Brightness = 0.05
+    else
+        local cc = Lighting:FindFirstChild("KloudColorFilter") if cc then cc:Destroy() end
+    end
+end
+
+local function SetStrongBloom(s)
+    Config.StrongBloom = s
+    if s then
+        local b = Lighting:FindFirstChild("KloudStrongBloom") or Instance.new("BloomEffect", Lighting)
+        b.Name = "KloudStrongBloom" b.Intensity = 1 b.Size = 24 b.Threshold = 0.5
+    else
+        local b = Lighting:FindFirstChild("KloudStrongBloom") if b then b:Destroy() end
     end
 end
 
@@ -900,9 +927,12 @@ AddTab("Movement", "🏃", function()
 end)
 
 AddTab("Visuals", "🎨", function()
+    AddToggle("Motion Blur", Config.MotionBlur, function(v) SetMotionBlur(v) end)
+    AddToggle("Bloom (Strong)", Config.StrongBloom, function(v) SetStrongBloom(v) end)
+    AddToggle("Color Filter", Config.ColorFilter, function(v) SetColorFilter(v) end)
+    AddToggle("Soft Blur", Config.SoftBlur, function(v) SetSoftBlur(v) end)
     AddToggle("God Rays (Shaders)", Config.GodRays, function(v) SetGodRays(v) end)
     AddToggle("Realistic (Bloom)", Config.Reflections, function(v) SetReflections(v) end)
-    AddToggle("Motion Blur", Config.MotionBlur, function(v) SetMotionBlur(v) end)
     AddSlider("Saturation", -100, 100, Config.Saturation, function(v) SetSaturation(v / 100) end)
     AddDropdown("Time", {"Day","Noon","Evening","Sunset","Night","Midnight","Sunrise"}, "Day", function(t) SetTime(t) end)
     AddDropdown("Skybox", {"Default","Realistic","Sunset","Space","Clouds"}, "Default", function(s) SetSkybox(s) end)
@@ -981,8 +1011,9 @@ AddTab("Settings", "⚙", function()
     AddButton("Destroy GUI", function()
         sg:Destroy() hudGui:Destroy() mobileGui:Destroy() 
         ChamsFolder:Destroy() ESPFolder:Destroy() RoleESPFolder:Destroy() PredictFolder:Destroy()
-        SetFullbright(false) SetRemoveFog(false) SetReflections(false) SetGodRays(false) SetMotionBlur(false) SetFPSBoost(false) StopFly()
-        DestroyFire() SetParticles(false)
+        SetFullbright(false) SetRemoveFog(false) SetReflections(false) SetGodRays(false) 
+        SetMotionBlur(false) SetSoftBlur(false) SetColorFilter(false) SetStrongBloom(false)
+        SetFPSBoost(false) StopFly() DestroyFire() SetParticles(false)
         local s = Lighting:FindFirstChild("KloudSaturation") if s then s:Destroy() end
         for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("Sky") and v.Name == "KloudSky" then v:Destroy() end end
         Camera.FieldOfView = 70
@@ -1043,9 +1074,8 @@ RunService.RenderStepped:Connect(function()
         local blur = Lighting:FindFirstChild("KloudMotionBlur")
         if blur then
             local curr = Camera.CFrame
-            local diff = (curr.Position - motionLastCF.Position).Magnitude + (1 - math.abs(curr.LookVector:Dot(motionLastCF.LookVector))) * 50
-            local target = math.clamp(diff * 2, 0, 20)
-            blur.Size = blur.Size + (target - blur.Size) * 0.3
+            local delta = (curr.LookVector - motionLastCF.LookVector).Magnitude
+            blur.Size = math.clamp(delta * 45, 0, 12)
             motionLastCF = curr
         end
     end
@@ -1243,7 +1273,7 @@ end)
 
 pcall(function() 
     game.StarterGui:SetCore("SendNotification", {
-        Title="Kloud Hub v4.3", 
+        Title="Kloud Hub v4.4", 
         Text=IS_MOBILE and "Mobile mode! Use side buttons" or "Loaded! RightShift = hide", 
         Duration=5
     }) 
