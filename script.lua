@@ -16,7 +16,7 @@ end)
 local Config = {
     AutoFarm=false, CoinChams=false, PlayerChams=false, AutoGrabGun=false, GunDroppedCham=false,
     Fullbright=false, RemoveFog=false,
-    AutoDodgeBomb=false, AutoPassBomb=false, BombESP=false,
+    AutoDodgeBomb=false, AutoPassBomb=false,
     WalkSpeed=16, JumpPower=50, InfJump=false, Noclip=false,
     FOV=90, FOVLocked=true, AntiAFK=true
 }
@@ -44,7 +44,6 @@ local function GetRoot()
     return c and c:FindFirstChild("HumanoidRootPart") 
 end
 
--- Проверка: есть ли у меня бомба
 local function HasBomb()
     local c = LocalPlayer.Character
     if not c then return false end
@@ -57,7 +56,6 @@ local function HasBomb()
     return false
 end
 
--- Ближайший игрок (не я)
 local function GetClosestPlayer()
     local closest, dist = nil, math.huge
     local root = GetRoot()
@@ -68,10 +66,7 @@ local function GetClosestPlayer()
             local ph = p.Character:FindFirstChildOfClass("Humanoid")
             if pr and ph and ph.Health > 0 then
                 local d = (root.Position - pr.Position).Magnitude
-                if d < dist then
-                    dist = d
-                    closest = p
-                end
+                if d < dist then dist = d closest = p end
             end
         end
     end
@@ -108,8 +103,8 @@ end
 
 local function CreateCoinChams()
     pcall(function()
-        local coinFolder = Instance.new("Folder", ChamsFolder)
-        coinFolder.Name = "Coins"
+        local cf = Instance.new("Folder", ChamsFolder)
+        cf.Name = "Coins"
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") and (obj.Name:lower():find("coin") or obj.Name:lower():find("cash")) then
                 local box = Instance.new("BoxHandleAdornment")
@@ -119,7 +114,7 @@ local function CreateCoinChams()
                 box.ZIndex = 5
                 box.Transparency = 0.2
                 box.Color3 = Color3.fromRGB(255, 215, 0)
-                box.Parent = coinFolder
+                box.Parent = cf
             end
         end
     end)
@@ -210,6 +205,33 @@ CloseBtn.TextColor3 = Colors.TextDim
 CloseBtn.AutoButtonColor = false
 CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Colors.Close}):Play() end)
 CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Colors.TextDim}):Play() end)
+
+-- ============ ПЛАВАЮЩАЯ КНОПКА (Reopen) ============
+local ReopenBtn = Instance.new("TextButton", sg)
+ReopenBtn.Size = UDim2.new(0, 80, 0, 35)
+ReopenBtn.Position = UDim2.new(0, 20, 0, 100)
+ReopenBtn.BackgroundColor3 = Colors.Bg
+ReopenBtn.Text = "Kloud"
+ReopenBtn.Font = Enum.Font.GothamBold
+ReopenBtn.TextSize = 14
+ReopenBtn.TextColor3 = Colors.Text
+ReopenBtn.BorderSizePixel = 0
+ReopenBtn.Visible = false
+ReopenBtn.Active = true
+ReopenBtn.Draggable = true
+ReopenBtn.AutoButtonColor = false
+local rbc = Instance.new("UICorner", ReopenBtn) rbc.CornerRadius = UDim.new(0, 8)
+local rbs = Instance.new("UIStroke", ReopenBtn)
+rbs.Color = Colors.Glow
+rbs.Thickness = 2
+rbs.Transparency = 0.3
+
+ReopenBtn.MouseEnter:Connect(function()
+    TweenService:Create(ReopenBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Panel}):Play()
+end)
+ReopenBtn.MouseLeave:Connect(function()
+    TweenService:Create(ReopenBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Bg}):Play()
+end)
 
 local MinArrow = Instance.new("TextButton", sg)
 MinArrow.Size = UDim2.new(0, 25, 0, 40)
@@ -470,12 +492,14 @@ AddTab("Settings", "⚙", function()
         Camera.FieldOfView = v
     end)
     AddToggle("Lock FOV", Config.FOVLocked, function(v) Config.FOVLocked = v end)
-    AddButton("Destroy GUI", function()
+    AddButton("Destroy GUI (Полностью выгрузить)", function()
         sg:Destroy()
         ChamsFolder:Destroy()
         SetFullbright(false)
         SetRemoveFog(false)
         Camera.FieldOfView = 70
+        local h = GetHum()
+        if h then h.WalkSpeed = 16 h.JumpPower = 50 end
     end)
 end)
 
@@ -486,24 +510,42 @@ Tabs["Main"].btn.TextColor3 = Colors.Text
 CurrentTab = "Main"
 Tabs["Main"].func()
 
+-- ============ СИСТЕМА ЗАКРЫТИЯ / ОТКРЫТИЯ ============
+-- X — скрывает меню и показывает плавающую кнопку
 CloseBtn.MouseButton1Click:Connect(function()
-    sg:Destroy()
-    ChamsFolder:Destroy()
-    SetFullbright(false)
-    SetRemoveFog(false)
-    Camera.FieldOfView = 70
+    Main.Visible = false
+    MinArrow.Visible = false
+    ReopenBtn.Visible = true
 end)
 
+-- Плавающая кнопка Kloud — возвращает меню
+ReopenBtn.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    MinArrow.Visible = true
+    ReopenBtn.Visible = false
+    MinArrow.Text = "<"
+end)
+
+-- Стрелка < — сворачивание в стрелку >
 MinArrow.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
     MinArrow.Text = Main.Visible and "<" or ">"
 end)
 
+-- RightShift — быстрое скрытие/показ
 UserInput.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
-        Main.Visible = not Main.Visible
-        MinArrow.Text = Main.Visible and "<" or ">"
+        if Main.Visible then
+            Main.Visible = false
+            MinArrow.Visible = false
+            ReopenBtn.Visible = true
+        else
+            Main.Visible = true
+            MinArrow.Visible = true
+            ReopenBtn.Visible = false
+            MinArrow.Text = "<"
+        end
     end
 end)
 
@@ -513,7 +555,7 @@ UserInput.JumpRequest:Connect(function()
     end
 end)
 
--- Auto Pass Bomb — телепортируется к ближайшему игроку если у тебя бомба
+-- Auto Pass Bomb
 task.spawn(function()
     while task.wait(0.2) do
         if Config.AutoPassBomb and HasBomb() then
