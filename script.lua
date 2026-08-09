@@ -1,4 +1,7 @@
--- ============ ВКЛАДКИ ============
+-- ⚡ Kloud Hub v4 | MM2 + Mobile Support
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+...-- ============ ВКЛАДКИ ============
 AddTab("Universal", "🌐", function()
     AddToggle("Player Chams", Config.PlayerChams, function(v)
         Config.PlayerChams = v
