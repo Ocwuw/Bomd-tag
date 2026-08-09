@@ -1,19 +1,23 @@
-local Players = game.Players
+-- ⚡ Kloud Hub | Optimized
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInput = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local Stats = game:GetService("Stats")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-local GuiParent
-if gethui then GuiParent = gethui() else GuiParent = game:GetService("CoreGui") end
-pcall(function() local old = GuiParent:FindFirstChild("KloudHub") if old then old:Destroy() end end)
+local GuiParent = (gethui and gethui()) or game:GetService("CoreGui")
+
+pcall(function() local old = GuiParent:FindFirstChild("KloudHub") if old then old:Destroy() end
+    local oldH = GuiParent:FindFirstChild("KloudHUD") if oldH then oldH:Destroy() end
+end)
 
 local Themes = {
     Default = {Bg=Color3.fromRGB(30,15,50),Panel=Color3.fromRGB(45,25,70),Panel2=Color3.fromRGB(55,30,85),Accent=Color3.fromRGB(170,80,255),Glow=Color3.fromRGB(200,100,255),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(200,180,220),ToggleOff=Color3.fromRGB(60,40,80),Transparency=0},
     Green = {Bg=Color3.fromRGB(15,40,20),Panel=Color3.fromRGB(25,55,30),Panel2=Color3.fromRGB(35,70,40),Accent=Color3.fromRGB(80,255,120),Glow=Color3.fromRGB(100,255,140),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(200,220,200),ToggleOff=Color3.fromRGB(40,60,45),Transparency=0},
     Red = {Bg=Color3.fromRGB(40,15,15),Panel=Color3.fromRGB(60,25,25),Panel2=Color3.fromRGB(80,35,35),Accent=Color3.fromRGB(255,60,60),Glow=Color3.fromRGB(255,100,100),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(220,200,200),ToggleOff=Color3.fromRGB(70,40,40),Transparency=0},
     Black = {Bg=Color3.fromRGB(15,15,15),Panel=Color3.fromRGB(25,25,25),Panel2=Color3.fromRGB(40,40,40),Accent=Color3.fromRGB(180,180,180),Glow=Color3.fromRGB(255,255,255),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(180,180,180),ToggleOff=Color3.fromRGB(50,50,50),Transparency=0},
-    Transparent = {Bg=Color3.fromRGB(20,10,40),Panel=Color3.fromRGB(50,30,80),Panel2=Color3.fromRGB(60,40,90),Accent=Color3.fromRGB(170,80,255),Glow=Color3.fromRGB(200,100,255),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(200,180,220),ToggleOff=Color3.fromRGB(60,40,80),Transparency=0.4},
     Aios = {Bg=Color3.fromRGB(0,0,0),Panel=Color3.fromRGB(10,10,10),Panel2=Color3.fromRGB(25,25,25),Accent=Color3.fromRGB(255,255,255),Glow=Color3.fromRGB(255,255,255),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(200,200,200),ToggleOff=Color3.fromRGB(40,40,40),Transparency=0.5},
     Ocean = {Bg=Color3.fromRGB(10,25,50),Panel=Color3.fromRGB(20,40,75),Panel2=Color3.fromRGB(30,55,95),Accent=Color3.fromRGB(80,180,255),Glow=Color3.fromRGB(100,200,255),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(200,220,240),ToggleOff=Color3.fromRGB(40,60,90),Transparency=0},
     Sunset = {Bg=Color3.fromRGB(50,20,40),Panel=Color3.fromRGB(80,35,60),Panel2=Color3.fromRGB(100,50,75),Accent=Color3.fromRGB(255,140,80),Glow=Color3.fromRGB(255,180,100),Text=Color3.fromRGB(255,255,255),TextDim=Color3.fromRGB(240,210,200),ToggleOff=Color3.fromRGB(90,55,70),Transparency=0},
@@ -28,24 +32,29 @@ local Config = {
     FlyEnabled=false, FlySpeed=50,
     Reflections=false, MotionBlur=false, MotionBlurIntensity=20,
     Saturation=0, CurrentTheme="Default", FPSBoost=false,
+    HUDEnabled=true, ShowSpectators=true,
 }
-Config.AmbientBackup = game:GetService("Lighting").Ambient
-Config.FogEndBackup = game:GetService("Lighting").FogEnd
+Config.AmbientBackup = Lighting.Ambient
+Config.FogEndBackup = Lighting.FogEnd
 
+-- ============ HELPERS ============
 local function GetHum() local c = LocalPlayer.Character return c and c:FindFirstChildOfClass("Humanoid") end
 local function GetRoot() local c = LocalPlayer.Character return c and c:FindFirstChild("HumanoidRootPart") end
 
 local function HasBomb()
-    local c = LocalPlayer.Character if not c then return false end
-    for _, v in pairs(c:GetChildren()) do if v:IsA("Tool") and v.Name:lower():find("bomb") then return true end end
-    for _, v in pairs(c:GetDescendants()) do if v.Name:lower():find("bomb") then return true end end
+    local c = LocalPlayer.Character
+    if not c then return false end
+    for _, v in ipairs(c:GetChildren()) do
+        if v:IsA("Tool") and v.Name:lower():find("bomb") then return true end
+    end
     return false
 end
 
 local function GetClosestPlayer()
     local closest, dist = nil, math.huge
-    local root = GetRoot() if not root then return nil end
-    for _, p in pairs(Players:GetPlayers()) do
+    local root = GetRoot()
+    if not root then return nil end
+    for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             local pr = p.Character:FindFirstChild("HumanoidRootPart")
             local ph = p.Character:FindFirstChildOfClass("Humanoid")
@@ -58,6 +67,7 @@ local function GetClosestPlayer()
     return closest
 end
 
+-- ============ ESP / CHAMS ============
 local ChamsFolder = Instance.new("Folder") ChamsFolder.Name = "KLOUD_Chams" ChamsFolder.Parent = GuiParent
 local ESPFolder = Instance.new("Folder") ESPFolder.Name = "KLOUD_ESP" ESPFolder.Parent = GuiParent
 
@@ -65,7 +75,7 @@ local function CreatePlayerCham(Plr)
     if not Plr or Plr == LocalPlayer or not Plr.Character then return end
     local ex = ChamsFolder:FindFirstChild(Plr.Name) if ex then ex:Destroy() end
     local folder = Instance.new("Folder", ChamsFolder) folder.Name = Plr.Name
-    for _, v in pairs(Plr.Character:GetChildren()) do
+    for _, v in ipairs(Plr.Character:GetChildren()) do
         if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
             local box = Instance.new("BoxHandleAdornment")
             box.Size = v.Size box.Adornee = v box.AlwaysOnTop = true box.ZIndex = 5
@@ -99,17 +109,16 @@ local function SetupCharAdded(Plr)
     end)
     Plr.CharacterRemoving:Connect(function() RemovePlayerCham(Plr) RemovePlayerESP(Plr) end)
 end
-for _, p in pairs(Players:GetPlayers()) do SetupCharAdded(p) end
-Players.PlayerAdded:Connect(function(p) SetupCharAdded(p) end)
+for _, p in ipairs(Players:GetPlayers()) do SetupCharAdded(p) end
+Players.PlayerAdded:Connect(SetupCharAdded)
 Players.PlayerRemoving:Connect(function(p) RemovePlayerCham(p) RemovePlayerESP(p) end)
 
-local function SetFullbright(s) local lt = game:GetService("Lighting")
-    if s then lt.Ambient=Color3.new(1,1,1) lt.ColorShift_Bottom=Color3.new(1,1,1) lt.ColorShift_Top=Color3.new(1,1,1)
-    else lt.Ambient=Config.AmbientBackup end
+-- ============ VISUAL FUNCTIONS ============
+local function SetFullbright(s)
+    if s then Lighting.Ambient=Color3.new(1,1,1) Lighting.ColorShift_Bottom=Color3.new(1,1,1) Lighting.ColorShift_Top=Color3.new(1,1,1)
+    else Lighting.Ambient=Config.AmbientBackup end
 end
-local function SetRemoveFog(s) local lt = game:GetService("Lighting")
-    if s then lt.FogEnd=100000 else lt.FogEnd=Config.FogEndBackup end
-end
+local function SetRemoveFog(s) if s then Lighting.FogEnd=100000 else Lighting.FogEnd=Config.FogEndBackup end end
 
 local flyBV, flyBG
 local function StartFly()
@@ -121,246 +130,267 @@ local function StopFly() if flyBV then flyBV:Destroy() flyBV = nil end if flyBG 
 
 local function SetReflections(s)
     Config.Reflections = s
-    pcall(function()
-        local lt = game:GetService("Lighting")
-        if s then
-            local bloom = lt:FindFirstChild("KloudBloom") or Instance.new("BloomEffect", lt)
-            bloom.Name = "KloudBloom" bloom.Intensity = 0.3 bloom.Size = 24 bloom.Threshold = 0.8
-            local sr = lt:FindFirstChild("KloudSunRays") or Instance.new("SunRaysEffect", lt)
-            sr.Name = "KloudSunRays" sr.Intensity = 0.1 sr.Spread = 0.5
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name:lower():find("floor") or obj.Name:lower():find("ground") or obj.Name:lower():find("base") or obj.Position.Y < 5) then
-                    if obj.Reflectance < 0.2 then obj.Reflectance = 0.3 end
-                end
-            end
-        else
-            local b = lt:FindFirstChild("KloudBloom") if b then b:Destroy() end
-            local s2 = lt:FindFirstChild("KloudSunRays") if s2 then s2:Destroy() end
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and obj.Reflectance > 0 then obj.Reflectance = 0 end
+    if s then
+        local bloom = Lighting:FindFirstChild("KloudBloom") or Instance.new("BloomEffect", Lighting)
+        bloom.Name = "KloudBloom" bloom.Intensity = 0.3 bloom.Size = 24 bloom.Threshold = 0.8
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Position.Y < 5 and obj.Reflectance < 0.2 then
+                obj.Reflectance = 0.3
             end
         end
-    end)
+    else
+        local b = Lighting:FindFirstChild("KloudBloom") if b then b:Destroy() end
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Reflectance > 0 then obj.Reflectance = 0 end
+        end
+    end
 end
 
 local function SetMotionBlur(enabled)
     Config.MotionBlur = enabled
-    pcall(function()
-        local lt = game:GetService("Lighting")
-        if enabled then
-            local blur = lt:FindFirstChild("KloudMotionBlur") or Instance.new("BlurEffect", lt)
-            blur.Name = "KloudMotionBlur" blur.Size = 0
-        else
-            local blur = lt:FindFirstChild("KloudMotionBlur")
-            if blur then blur:Destroy() end
-        end
-    end)
+    if enabled then
+        local blur = Lighting:FindFirstChild("KloudMotionBlur") or Instance.new("BlurEffect", Lighting)
+        blur.Name = "KloudMotionBlur" blur.Size = 0
+    else
+        local blur = Lighting:FindFirstChild("KloudMotionBlur") if blur then blur:Destroy() end
+    end
 end
 
 local function SetSaturation(val)
     Config.Saturation = val
-    pcall(function()
-        local lt = game:GetService("Lighting")
-        local cc = lt:FindFirstChild("KloudSaturation") or Instance.new("ColorCorrectionEffect", lt)
-        cc.Name = "KloudSaturation" cc.Saturation = val
-    end)
+    local cc = Lighting:FindFirstChild("KloudSaturation") or Instance.new("ColorCorrectionEffect", Lighting)
+    cc.Name = "KloudSaturation" cc.Saturation = val
 end
 
-local function SetTime(timeStr)
-    pcall(function()
-        local lt = game:GetService("Lighting")
-        if timeStr == "Day" then lt.ClockTime = 12
-        elseif timeStr == "Noon" then lt.ClockTime = 14
-        elseif timeStr == "Evening" then lt.ClockTime = 18
-        elseif timeStr == "Night" then lt.ClockTime = 0
-        elseif timeStr == "Midnight" then lt.ClockTime = 23
-        elseif timeStr == "Sunrise" then lt.ClockTime = 6
-        elseif timeStr == "Sunset" then lt.ClockTime = 19 end
-    end)
-end
+local timeMap = {Day=12, Noon=14, Evening=18, Sunset=19, Night=0, Midnight=23, Sunrise=6}
+local function SetTime(t) if timeMap[t] then Lighting.ClockTime = timeMap[t] end end
 
--- ========== SKYBOX ==========
 local Skyboxes = {
-    Realistic = {
-        Up = "rbxassetid://6444884785", Dn = "rbxassetid://6444884785",
-        Lf = "rbxassetid://6444884785", Rt = "rbxassetid://6444884785",
-        Ft = "rbxassetid://6444884785", Bk = "rbxassetid://6444884785",
-    },
-    Sunset = {
-        Up = "rbxassetid://271042516", Dn = "rbxassetid://271077243",
-        Lf = "rbxassetid://271077958", Rt = "rbxassetid://271077996",
-        Ft = "rbxassetid://271077829", Bk = "rbxassetid://271077869",
-    },
-    Space = {
-        Up = "rbxassetid://159454299", Dn = "rbxassetid://159454296",
-        Lf = "rbxassetid://159454286", Rt = "rbxassetid://159454300",
-        Ft = "rbxassetid://159454288", Bk = "rbxassetid://159454293",
-    },
-    Nebula = {
-        Up = "rbxassetid://159454299", Dn = "rbxassetid://159454296",
-        Lf = "rbxassetid://159454286", Rt = "rbxassetid://159454300",
-        Ft = "rbxassetid://159454288", Bk = "rbxassetid://159454293",
-    },
-    Clouds = {
-        Up = "rbxassetid://456977674", Dn = "rbxassetid://456977674",
-        Lf = "rbxassetid://456977674", Rt = "rbxassetid://456977674",
-        Ft = "rbxassetid://456977674", Bk = "rbxassetid://456977674",
-    },
+    Realistic = "rbxassetid://6444884785",
+    Sunset = "rbxassetid://271042516",
+    Space = "rbxassetid://159454299",
+    Clouds = "rbxassetid://456977674",
 }
 
 local function SetSkybox(name)
-    pcall(function()
-        local lt = game:GetService("Lighting")
-        -- Удаляем старый Sky
-        for _, v in pairs(lt:GetChildren()) do
-            if v:IsA("Sky") then v:Destroy() end
-        end
-        if name == "Default" then return end
-        
-        local sky = Instance.new("Sky")
-        sky.Name = "KloudSky"
-        if Skyboxes[name] then
-            local s = Skyboxes[name]
-            sky.SkyboxUp = s.Up sky.SkyboxDn = s.Dn
-            sky.SkyboxLf = s.Lf sky.SkyboxRt = s.Rt
-            sky.SkyboxFt = s.Ft sky.SkyboxBk = s.Bk
-        end
-        sky.StarCount = (name == "Space" or name == "Nebula") and 3000 or 0
-        sky.Parent = lt
-    end)
+    for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
+    if name == "Default" then return end
+    local sky = Instance.new("Sky") sky.Name = "KloudSky"
+    local id = Skyboxes[name]
+    if id then sky.SkyboxUp=id sky.SkyboxDn=id sky.SkyboxLf=id sky.SkyboxRt=id sky.SkyboxFt=id sky.SkyboxBk=id end
+    sky.StarCount = (name == "Space") and 3000 or 0
+    sky.Parent = Lighting
 end
 
--- ========== FPS BOOST ==========
-local originalTerrainDecoration = nil
-local originalGlobalShadows = nil
 local originalCastShadow = {}
-
 local function SetFPSBoost(s)
     Config.FPSBoost = s
-    pcall(function()
-        local lt = game:GetService("Lighting")
-        if s then
-            -- Сохраняем оригиналы
-            if originalGlobalShadows == nil then originalGlobalShadows = lt.GlobalShadows end
-            if workspace.Terrain and originalTerrainDecoration == nil then
-                originalTerrainDecoration = workspace.Terrain.Decoration
-            end
-            
-            -- Отключаем тени
-            lt.GlobalShadows = false
-            lt.Brightness = 2
-            
-            -- Убираем траву
-            if workspace.Terrain then workspace.Terrain.Decoration = false end
-            
-            -- Отключаем всё лишнее
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    if originalCastShadow[v] == nil then originalCastShadow[v] = v.CastShadow end
-                    v.CastShadow = false
-                    v.Material = Enum.Material.SmoothPlastic
-                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
-                    v.Enabled = false
-                elseif v:IsA("Decal") or v:IsA("Texture") then
-                    v.Transparency = 1
-                end
-            end
-            
-            -- Убираем эффекты Lighting (кроме наших)
-            for _, v in pairs(lt:GetChildren()) do
-                if (v:IsA("BloomEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect")) 
-                and not v.Name:find("Kloud") then
-                    v.Enabled = false
-                end
-            end
-        else
-            -- Возвращаем оригиналы
-            if originalGlobalShadows ~= nil then lt.GlobalShadows = originalGlobalShadows end
-            if workspace.Terrain and originalTerrainDecoration ~= nil then workspace.Terrain.Decoration = originalTerrainDecoration end
-            for part, val in pairs(originalCastShadow) do
-                if part and part.Parent then part.CastShadow = val end
-            end
-            for _, v in pairs(game:GetService("Lighting"):GetChildren()) do
-                if v:IsA("BloomEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") then
-                    v.Enabled = true
-                end
-            end
+    if s then
+        Lighting.GlobalShadows = false
+        if workspace.Terrain then workspace.Terrain.Decoration = false end
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if originalCastShadow[v] == nil then originalCastShadow[v] = v.CastShadow end
+                v.CastShadow = false v.Material = Enum.Material.SmoothPlastic
+            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+                v.Enabled = false
+            elseif v:IsA("Decal") or v:IsA("Texture") then v.Transparency = 1 end
         end
-    end)
+    else
+        Lighting.GlobalShadows = true
+        if workspace.Terrain then workspace.Terrain.Decoration = true end
+        for part, val in pairs(originalCastShadow) do if part and part.Parent then part.CastShadow = val end end
+    end
 end
 
--- ========== COPY OUTFIT ==========
 local function CopyOutfit(targetPlayer)
-    pcall(function()
-        if not targetPlayer or not targetPlayer.Character then return end
-        local myChar = LocalPlayer.Character
-        if not myChar then return end
-        
-        local targetHum = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        local myHum = myChar:FindFirstChildOfClass("Humanoid")
-        if not targetHum or not myHum then return end
-        
-        -- Удаляем все свои аксессуары/шляпы
-        for _, v in pairs(myChar:GetChildren()) do
-            if v:IsA("Accessory") or v:IsA("Hat") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
-                v:Destroy()
-            end
+    if not targetPlayer or not targetPlayer.Character then return end
+    local myChar = LocalPlayer.Character if not myChar then return end
+    local myHum = myChar:FindFirstChildOfClass("Humanoid")
+    local targetHum = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if not myHum or not targetHum then return end
+    for _, v in ipairs(myChar:GetChildren()) do
+        if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then v:Destroy() end
+    end
+    for _, v in ipairs(targetPlayer.Character:GetChildren()) do
+        if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
+            v:Clone().Parent = myChar
         end
-        
-        -- Копируем всё с цели
-        for _, v in pairs(targetPlayer.Character:GetChildren()) do
-            if v:IsA("Accessory") or v:IsA("Hat") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
-                local clone = v:Clone()
-                clone.Parent = myChar
-            end
-        end
-        
-        -- Копируем HumanoidDescription (если возможно)
-        pcall(function()
-            local desc = targetHum:GetAppliedDescription()
-            myHum:ApplyDescription(desc)
-        end)
-        
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "✅ Copy Outfit",
-            Text = "Скопирован внешний вид: " .. targetPlayer.Name,
-            Duration = 4
-        })
-    end)
+    end
+    pcall(function() myHum:ApplyDescription(targetHum:GetAppliedDescription()) end)
+    pcall(function() game.StarterGui:SetCore("SendNotification", {Title="✅ Copy Outfit", Text="Copied: "..targetPlayer.Name, Duration=4}) end)
 end
 
-local lastCamCF = Camera.CFrame
+-- ============ HUD (FPS/Time/Spectators) ============
+local hudGui = Instance.new("ScreenGui") hudGui.Name = "KloudHUD" hudGui.ResetOnSpawn = false hudGui.Parent = GuiParent
 
--- ============ UI ============
+-- Верхний блок: FPS + Time + Ping
+local infoFrame = Instance.new("Frame", hudGui)
+infoFrame.Size = UDim2.new(0, 180, 0, 70)
+infoFrame.Position = UDim2.new(1, -200, 0, 20)
+infoFrame.BackgroundColor3 = Color3.fromRGB(20, 10, 35)
+infoFrame.BackgroundTransparency = 0.3
+infoFrame.BorderSizePixel = 0
+Instance.new("UICorner", infoFrame).CornerRadius = UDim.new(0, 6)
+local infoStroke = Instance.new("UIStroke", infoFrame) infoStroke.Color = Colors.Glow infoStroke.Thickness = 1 infoStroke.Transparency = 0.4
+
+local fpsLabel = Instance.new("TextLabel", infoFrame)
+fpsLabel.Size = UDim2.new(1, -10, 0, 22)
+fpsLabel.Position = UDim2.new(0, 5, 0, 3)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Text = "FPS: 60"
+fpsLabel.Font = Enum.Font.GothamBold
+fpsLabel.TextSize = 13
+fpsLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local timeLabel = Instance.new("TextLabel", infoFrame)
+timeLabel.Size = UDim2.new(1, -10, 0, 22)
+timeLabel.Position = UDim2.new(0, 5, 0, 22)
+timeLabel.BackgroundTransparency = 1
+timeLabel.Text = "Time: 00:00:00"
+timeLabel.Font = Enum.Font.Gotham
+timeLabel.TextSize = 12
+timeLabel.TextColor3 = Colors.Text
+timeLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local pingLabel = Instance.new("TextLabel", infoFrame)
+pingLabel.Size = UDim2.new(1, -10, 0, 22)
+pingLabel.Position = UDim2.new(0, 5, 0, 42)
+pingLabel.BackgroundTransparency = 1
+pingLabel.Text = "Ping: 0ms"
+pingLabel.Font = Enum.Font.Gotham
+pingLabel.TextSize = 12
+pingLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+pingLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Список зрителей (Spectators)
+local spectFrame = Instance.new("Frame", hudGui)
+spectFrame.Size = UDim2.new(0, 180, 0, 200)
+spectFrame.Position = UDim2.new(1, -200, 0, 100)
+spectFrame.BackgroundColor3 = Color3.fromRGB(20, 10, 35)
+spectFrame.BackgroundTransparency = 0.3
+spectFrame.BorderSizePixel = 0
+Instance.new("UICorner", spectFrame).CornerRadius = UDim.new(0, 6)
+local spectStroke = Instance.new("UIStroke", spectFrame) spectStroke.Color = Colors.Glow spectStroke.Thickness = 1 spectStroke.Transparency = 0.4
+
+local spectTitle = Instance.new("TextLabel", spectFrame)
+spectTitle.Size = UDim2.new(1, -10, 0, 22)
+spectTitle.Position = UDim2.new(0, 5, 0, 3)
+spectTitle.BackgroundTransparency = 1
+spectTitle.Text = "👁 Spectators"
+spectTitle.Font = Enum.Font.GothamBold
+spectTitle.TextSize = 13
+spectTitle.TextColor3 = Colors.Accent
+spectTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local spectList = Instance.new("ScrollingFrame", spectFrame)
+spectList.Size = UDim2.new(1, -10, 1, -30)
+spectList.Position = UDim2.new(0, 5, 0, 25)
+spectList.BackgroundTransparency = 1
+spectList.BorderSizePixel = 0
+spectList.CanvasSize = UDim2.new(0, 0, 0, 0)
+spectList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+spectList.ScrollBarThickness = 2
+spectList.ScrollBarImageColor3 = Colors.Accent
+local spectLayout = Instance.new("UIListLayout", spectList) spectLayout.Padding = UDim.new(0, 2)
+
+local function UpdateSpectators()
+    for _, v in ipairs(spectList:GetChildren()) do if v:IsA("TextLabel") then v:Destroy() end end
+    local myChar = LocalPlayer.Character
+    if not myChar then return end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local isSpectating = false
+            pcall(function()
+                if p.Character then
+                    local cam = workspace.CurrentCamera
+                    if p == LocalPlayer then return end
+                    if p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then
+                        isSpectating = true
+                    end
+                end
+            end)
+            local lbl = Instance.new("TextLabel", spectList)
+            lbl.Size = UDim2.new(1, 0, 0, 16)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = (isSpectating and "💀 " or "🎮 ") .. p.Name
+            lbl.Font = Enum.Font.Gotham
+            lbl.TextSize = 11
+            lbl.TextColor3 = isSpectating and Color3.fromRGB(255,100,100) or Colors.Text
+            lbl.TextXAlignment = Enum.TextXAlignment.Left
+        end
+    end
+end
+
+-- FPS счётчик (среднее за 10 кадров)
+local fpsFrames = {}
+local lastTick = tick()
+RunService.RenderStepped:Connect(function()
+    if not Config.HUDEnabled then return end
+    local now = tick()
+    local fps = 1 / (now - lastTick)
+    lastTick = now
+    table.insert(fpsFrames, fps)
+    if #fpsFrames > 10 then table.remove(fpsFrames, 1) end
+end)
+
+-- HUD обновление раз в секунду (не грузит FPS)
+task.spawn(function()
+    while task.wait(1) do
+        if hudGui.Parent and Config.HUDEnabled then
+            local sum = 0
+            for _, f in ipairs(fpsFrames) do sum = sum + f end
+            local avgFps = math.floor(sum / math.max(#fpsFrames, 1))
+            fpsLabel.Text = "FPS: " .. avgFps
+            fpsLabel.TextColor3 = avgFps > 40 and Color3.fromRGB(100,255,100) or (avgFps > 20 and Color3.fromRGB(255,200,100) or Color3.fromRGB(255,80,80))
+            
+            timeLabel.Text = "Time: " .. os.date("%H:%M:%S")
+            
+            pcall(function()
+                local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+                pingLabel.Text = "Ping: " .. ping .. "ms"
+                pingLabel.TextColor3 = ping < 100 and Color3.fromRGB(100,255,100) or (ping < 250 and Color3.fromRGB(255,200,100) or Color3.fromRGB(255,80,80))
+            end)
+            
+            if Config.ShowSpectators then UpdateSpectators() end
+        end
+    end
+end)
+
+-- ============ MAIN UI ============
 local sg = Instance.new("ScreenGui") sg.Name = "KloudHub" sg.ResetOnSpawn = false sg.Parent = GuiParent
 
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 620, 0, 420) Main.Position = UDim2.new(0.5, -310, 0.5, -210)
 Main.BackgroundColor3 = Colors.Bg Main.BorderSizePixel = 0 Main.Active = true Main.Draggable = true Main.Parent = sg
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
-local glow = Instance.new("UIStroke", Main) glow.Color = Colors.Glow glow.Thickness = 2 glow.Transparency = 0.3
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
-local ledL = Instance.new("Frame", Main) ledL.Size = UDim2.new(0,2,1,-20) ledL.Position = UDim2.new(0,-4,0,10)
-ledL.BackgroundColor3 = Color3.new(1,1,1) ledL.BorderSizePixel = 0 ledL.BackgroundTransparency = 0.3
-local lgL = Instance.new("UIGradient", ledL)
-lgL.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.new(1,1,1)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(200,200,255)),ColorSequenceKeypoint.new(1,Color3.new(1,1,1))})
-lgL.Rotation = 90
+local outerGlow = Instance.new("ImageLabel", Main)
+outerGlow.Size = UDim2.new(1, 60, 1, 60) outerGlow.Position = UDim2.new(0, -30, 0, -30)
+outerGlow.BackgroundTransparency = 1 outerGlow.Image = "rbxassetid://5028857084"
+outerGlow.ImageColor3 = Colors.Glow outerGlow.ImageTransparency = 0.3
+outerGlow.ScaleType = Enum.ScaleType.Slice outerGlow.SliceCenter = Rect.new(24, 24, 276, 276) outerGlow.ZIndex = -1
 
-local ledR = Instance.new("Frame", Main) ledR.Size = UDim2.new(0,2,1,-20) ledR.Position = UDim2.new(1,2,0,10)
-ledR.BackgroundColor3 = Color3.new(1,1,1) ledR.BorderSizePixel = 0 ledR.BackgroundTransparency = 0.3
-local lgR = Instance.new("UIGradient", ledR)
-lgR.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.new(1,1,1)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(200,200,255)),ColorSequenceKeypoint.new(1,Color3.new(1,1,1))})
-lgR.Rotation = 90
+local borderStroke = Instance.new("UIStroke", Main)
+borderStroke.Thickness = 3 borderStroke.Color = Colors.Glow
+borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+borderStroke.LineJoinMode = Enum.LineJoinMode.Round
 
-task.spawn(function()
-    while sg.Parent do
-        TweenService:Create(lgL, TweenInfo.new(2,Enum.EasingStyle.Sine), {Offset=Vector2.new(0,1)}):Play()
-        TweenService:Create(lgR, TweenInfo.new(2,Enum.EasingStyle.Sine), {Offset=Vector2.new(0,1)}):Play()
-        task.wait(2)
-        TweenService:Create(lgL, TweenInfo.new(2,Enum.EasingStyle.Sine), {Offset=Vector2.new(0,-1)}):Play()
-        TweenService:Create(lgR, TweenInfo.new(2,Enum.EasingStyle.Sine), {Offset=Vector2.new(0,-1)}):Play()
-        task.wait(2)
-    end
+local borderGradient = Instance.new("UIGradient", borderStroke)
+borderGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Colors.Accent),
+    ColorSequenceKeypoint.new(0.5, Colors.Glow),
+    ColorSequenceKeypoint.new(1, Colors.Accent),
+})
+
+-- Оптимизированная анимация обводки (через RenderStepped вместо wait)
+local rotationTime = 0
+local borderConn = RunService.RenderStepped:Connect(function(dt)
+    if not sg.Parent then borderConn:Disconnect() return end
+    rotationTime = rotationTime + dt * 60
+    if rotationTime >= 360 then rotationTime = 0 end
+    borderGradient.Rotation = rotationTime
 end)
 
 local TitleBar = Instance.new("Frame", Main) TitleBar.Size = UDim2.new(1,0,0,35) TitleBar.BackgroundTransparency = 1
@@ -369,17 +399,6 @@ local BoltLabel = Instance.new("TextLabel", TitleBar)
 BoltLabel.Size = UDim2.new(0,25,0,25) BoltLabel.Position = UDim2.new(0,5,0,5)
 BoltLabel.BackgroundTransparency = 1 BoltLabel.Text = "⚡" BoltLabel.TextSize = 18 BoltLabel.Font = Enum.Font.GothamBold
 BoltLabel.TextColor3 = Color3.new(1,1,1)
-local boltGrad = Instance.new("UIGradient", BoltLabel)
-boltGrad.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.new(1,1,1)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(200,200,255)),ColorSequenceKeypoint.new(1,Color3.new(1,1,1))})
-boltGrad.Rotation = 90
-task.spawn(function()
-    while sg.Parent do
-        TweenService:Create(boltGrad, TweenInfo.new(1.5,Enum.EasingStyle.Sine), {Offset=Vector2.new(0,-1)}):Play()
-        task.wait(1.5)
-        TweenService:Create(boltGrad, TweenInfo.new(1.5,Enum.EasingStyle.Sine), {Offset=Vector2.new(0,1)}):Play()
-        task.wait(1.5)
-    end
-end)
 
 local Title = Instance.new("TextLabel", TitleBar)
 Title.Size = UDim2.new(0,200,1,0) Title.Position = UDim2.new(0,30,0,0)
@@ -390,8 +409,6 @@ local CloseBtn = Instance.new("TextButton", TitleBar)
 CloseBtn.Size = UDim2.new(0,30,0,25) CloseBtn.Position = UDim2.new(1,-35,0,5)
 CloseBtn.BackgroundTransparency = 1 CloseBtn.Text = "×" CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 22 CloseBtn.TextColor3 = Colors.TextDim CloseBtn.AutoButtonColor = false
-CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,70,70)}):Play() end)
-CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn,TweenInfo.new(0.15),{TextColor3=Colors.TextDim}):Play() end)
 
 local ReopenBtn = Instance.new("TextButton", sg)
 ReopenBtn.Size = UDim2.new(0,80,0,35) ReopenBtn.Position = UDim2.new(0,20,0,100)
@@ -419,7 +436,7 @@ Instance.new("UIListLayout", Content).Padding = UDim.new(0,8)
 
 local Tabs = {}
 local CurrentTab = nil
-local function ClearContent() for _, v in pairs(Content:GetChildren()) do if not v:IsA("UIListLayout") then v:Destroy() end end end
+local function ClearContent() for _, v in ipairs(Content:GetChildren()) do if not v:IsA("UIListLayout") then v:Destroy() end end end
 
 local function AddToggle(name, default, callback)
     local frame = Instance.new("Frame", Content) frame.Size = UDim2.new(1,-5,0,45)
@@ -494,7 +511,7 @@ local function AddDropdown(name, options, default, callback)
     btn.TextColor3 = Colors.Text btn.BorderSizePixel = 0
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
     local idx = 1
-    for i, v in pairs(options) do if v == default then idx = i end end
+    for i, v in ipairs(options) do if v == default then idx = i end end
     btn.MouseButton1Click:Connect(function()
         idx = idx + 1 if idx > #options then idx = 1 end
         btn.Text = options[idx].." ▼" callback(options[idx])
@@ -533,17 +550,16 @@ local function AddTab(name, icon, contentFunc)
     end)
 end
 
--- ============ ВКЛАДКИ ============
 AddTab("Universal", "🌐", function()
     AddToggle("Player Chams", Config.PlayerChams, function(v)
         Config.PlayerChams = v
-        if v then for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then CreatePlayerCham(p) end end
-        else for _, p in pairs(Players:GetPlayers()) do RemovePlayerCham(p) end end
+        if v then for _, p in ipairs(Players:GetPlayers()) do if p ~= LocalPlayer then CreatePlayerCham(p) end end
+        else for _, p in ipairs(Players:GetPlayers()) do RemovePlayerCham(p) end end
     end)
     AddToggle("Player ESP", Config.PlayerESP, function(v)
         Config.PlayerESP = v
-        if v then for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then CreatePlayerESP(p) end end
-        else for _, p in pairs(Players:GetPlayers()) do RemovePlayerESP(p) end end
+        if v then for _, p in ipairs(Players:GetPlayers()) do if p ~= LocalPlayer then CreatePlayerESP(p) end end
+        else for _, p in ipairs(Players:GetPlayers()) do RemovePlayerESP(p) end end
     end)
     AddSlider("WalkSpeed", 16, 200, Config.WalkSpeed, function(v) Config.WalkSpeed = v local h = GetHum() if h then h.WalkSpeed = v end end)
     AddSlider("JumpPower", 50, 300, Config.JumpPower, function(v) Config.JumpPower = v local h = GetHum() if h then h.JumpPower = v end end)
@@ -554,35 +570,51 @@ AddTab("Universal", "🌐", function()
     AddToggle("Fly", Config.FlyEnabled, function(v) Config.FlyEnabled = v if v then StartFly() else StopFly() end end)
     AddSlider("Fly Speed", 10, 100, Config.FlySpeed, function(v) Config.FlySpeed = v end)
     AddToggle("FPS Boost", Config.FPSBoost, function(v) SetFPSBoost(v) end)
-    AddTextbox("Copy Outfit (введи ник)", "Player name...", function(txt)
+    AddTextbox("Copy Outfit", "Player name...", function(txt)
         if txt == "" then return end
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Name:lower():find(txt:lower()) and p ~= LocalPlayer then
-                CopyOutfit(p) return
-            end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Name:lower():find(txt:lower()) and p ~= LocalPlayer then CopyOutfit(p) return end
         end
-        game.StarterGui:SetCore("SendNotification", {Title="❌ Не найден", Text="Игрок не найден", Duration=3})
     end)
 end)
 
 AddTab("Visuals", "🎨", function()
     AddToggle("Motion Blur", Config.MotionBlur, function(v) SetMotionBlur(v) end)
-    AddSlider("Blur Intensity", 5, 50, Config.MotionBlurIntensity, function(v) Config.MotionBlurIntensity = v end)
     AddSlider("Saturation", -100, 100, Config.Saturation, function(v) SetSaturation(v / 100) end)
-    AddToggle("Realistic (Reflections)", Config.Reflections, function(v) SetReflections(v) end)
-    AddDropdown("Time of Day", {"Day","Noon","Evening","Sunset","Night","Midnight","Sunrise"}, "Day", function(t) SetTime(t) end)
-    AddDropdown("Skybox", {"Default","Realistic","Sunset","Space","Nebula","Clouds"}, "Default", function(s) SetSkybox(s) end)
+    AddToggle("Realistic", Config.Reflections, function(v) SetReflections(v) end)
+    AddDropdown("Time", {"Day","Noon","Evening","Sunset","Night","Midnight","Sunrise"}, "Day", function(t) SetTime(t) end)
+    AddDropdown("Skybox", {"Default","Realistic","Sunset","Space","Clouds"}, "Default", function(s) SetSkybox(s) end)
     AddToggle("Fullbright", Config.Fullbright, function(v) Config.Fullbright = v SetFullbright(v) end)
     AddToggle("Remove Fog", Config.RemoveFog, function(v) Config.RemoveFog = v SetRemoveFog(v) end)
 end)
 
+AddTab("HUD", "📊", function()
+    AddToggle("Show HUD", Config.HUDEnabled, function(v) 
+        Config.HUDEnabled = v 
+        infoFrame.Visible = v
+        spectFrame.Visible = v and Config.ShowSpectators
+    end)
+    AddToggle("Show Spectators", Config.ShowSpectators, function(v)
+        Config.ShowSpectators = v
+        spectFrame.Visible = v and Config.HUDEnabled
+    end)
+end)
+
 AddTab("Misc", "≡", function()
-    AddDropdown("Theme", {"Default","Green","Red","Black","Transparent","Aios","Ocean","Sunset"}, Config.CurrentTheme, function(t)
+    AddDropdown("Theme", {"Default","Green","Red","Black","Aios","Ocean","Sunset"}, Config.CurrentTheme, function(t)
         Config.CurrentTheme = t Colors = Themes[t]
-        Main.BackgroundColor3 = Colors.Bg glow.Color = Colors.Glow
+        Main.BackgroundColor3 = Colors.Bg
         ReopenBtn.BackgroundColor3 = Colors.Bg rbs.Color = Colors.Glow
         Title.TextColor3 = Colors.Text ContentTitle.TextColor3 = Colors.Text
         Content.ScrollBarImageColor3 = Colors.Accent
+        borderStroke.Color = Colors.Glow outerGlow.ImageColor3 = Colors.Glow
+        infoStroke.Color = Colors.Glow spectStroke.Color = Colors.Glow
+        spectTitle.TextColor3 = Colors.Accent
+        borderGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Colors.Accent),
+            ColorSequenceKeypoint.new(0.5, Colors.Glow),
+            ColorSequenceKeypoint.new(1, Colors.Accent),
+        })
         if Tabs[CurrentTab] then ClearContent() Tabs[CurrentTab].func() end
     end)
 end)
@@ -599,12 +631,10 @@ end)
 
 AddTab("Settings", "⚙", function()
     AddButton("Destroy GUI", function()
-        sg:Destroy() ChamsFolder:Destroy() ESPFolder:Destroy()
+        sg:Destroy() hudGui:Destroy() ChamsFolder:Destroy() ESPFolder:Destroy()
         SetFullbright(false) SetRemoveFog(false) SetReflections(false) SetMotionBlur(false) SetFPSBoost(false) StopFly()
-        pcall(function() local lt = game:GetService("Lighting")
-            local s = lt:FindFirstChild("KloudSaturation") if s then s:Destroy() end
-            for _, v in pairs(lt:GetChildren()) do if v:IsA("Sky") and v.Name == "KloudSky" then v:Destroy() end end
-        end)
+        local s = Lighting:FindFirstChild("KloudSaturation") if s then s:Destroy() end
+        for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("Sky") and v.Name == "KloudSky" then v:Destroy() end end
         Camera.FieldOfView = 70
         local h = GetHum() if h then h.WalkSpeed = 16 h.JumpPower = 50 end
     end)
@@ -629,63 +659,67 @@ UserInput.JumpRequest:Connect(function()
     if Config.InfJump then local h = GetHum() if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end
 end)
 
+-- Оптимизированный главный цикл
+local motionLastCF = Camera.CFrame
 RunService.RenderStepped:Connect(function()
+    -- Fly
     if Config.FlyEnabled and flyBV and flyBG then
-        local root = GetRoot()
-        if root then
-            local cam = Camera.CFrame
-            local move = Vector3.new()
-            if UserInput:IsKeyDown(Enum.KeyCode.W) then move = move + cam.LookVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.S) then move = move - cam.LookVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.A) then move = move - cam.RightVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.D) then move = move + cam.RightVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
-            if UserInput:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
-            flyBV.Velocity = move * Config.FlySpeed flyBG.CFrame = cam
-        end
+        local cam = Camera.CFrame
+        local move = Vector3.new()
+        if UserInput:IsKeyDown(Enum.KeyCode.W) then move = move + cam.LookVector end
+        if UserInput:IsKeyDown(Enum.KeyCode.S) then move = move - cam.LookVector end
+        if UserInput:IsKeyDown(Enum.KeyCode.A) then move = move - cam.RightVector end
+        if UserInput:IsKeyDown(Enum.KeyCode.D) then move = move + cam.RightVector end
+        if UserInput:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+        if UserInput:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
+        flyBV.Velocity = move * Config.FlySpeed flyBG.CFrame = cam
     end
+    -- FOV Lock
     if Config.FOVLocked and Camera.FieldOfView ~= Config.FOV then Camera.FieldOfView = Config.FOV end
-    if Config.Noclip then
-        local c = LocalPlayer.Character
-        if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end end end
-    end
+    -- Motion Blur
     if Config.MotionBlur then
-        pcall(function()
-            local blur = game:GetService("Lighting"):FindFirstChild("KloudMotionBlur")
-            if blur then
-                local currentCF = Camera.CFrame
-                local angleDiff = math.abs(currentCF.LookVector:Dot(lastCamCF.LookVector))
-                local posDiff = (currentCF.Position - lastCamCF.Position).Magnitude
-                local speed = math.clamp((1 - angleDiff) * 100 + posDiff, 0, 1)
-                local targetBlur = speed * Config.MotionBlurIntensity
-                blur.Size = blur.Size + (targetBlur - blur.Size) * 0.3
-                lastCamCF = currentCF
-            end
-        end)
+        local blur = Lighting:FindFirstChild("KloudMotionBlur")
+        if blur then
+            local curr = Camera.CFrame
+            local diff = (curr.Position - motionLastCF.Position).Magnitude + (1 - math.abs(curr.LookVector:Dot(motionLastCF.LookVector))) * 50
+            local target = math.clamp(diff * 2, 0, Config.MotionBlurIntensity)
+            blur.Size = blur.Size + (target - blur.Size) * 0.3
+            motionLastCF = curr
+        end
     end
 end)
 
+-- Noclip (heartbeat, легче чем RenderStepped)
+RunService.Heartbeat:Connect(function()
+    if Config.Noclip then
+        local c = LocalPlayer.Character
+        if c then for _, v in ipairs(c:GetDescendants()) do if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end end end
+    end
+end)
+
+-- Auto Pass Bomb
 task.spawn(function()
     while task.wait(0.15) do
         if Config.AutoPassBomb and HasBomb() then
             local target = GetClosestPlayer() local root = GetRoot()
             if target and target.Character and root then
                 local tr = target.Character:FindFirstChild("HumanoidRootPart")
-                if tr then pcall(function()
+                if tr then
                     local tp = tr.Position local mp = tp + (tr.CFrame.LookVector * 3)
                     root.CFrame = CFrame.new(mp, tp)
-                end) end
+                end
             end
         end
     end
 end)
 
+-- Auto Dodge Bomb
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.15) do
         if Config.AutoDodgeBomb and not HasBomb() then
             local root = GetRoot()
             if root then
-                for _, obj in pairs(workspace:GetDescendants()) do
+                for _, obj in ipairs(workspace:GetDescendants()) do
                     if obj:IsA("BasePart") and obj.Name:lower():find("bomb") then
                         local d = (root.Position - obj.Position).Magnitude
                         if d < 15 then root.CFrame = CFrame.new(root.Position + (root.Position - obj.Position).Unit * 30) break end
