@@ -14,7 +14,7 @@ pcall(function()
 end)
 
 local Config = {
-    AutoFarm=false, CoinChams=false, PlayerChams=false, AutoGrabGun=false, GunDroppedCham=false,
+    PlayerChams=false,
     Fullbright=false, RemoveFog=false,
     AutoDodgeBomb=false, AutoPassBomb=false,
     WalkSpeed=16, JumpPower=50, InfJump=false, Noclip=false,
@@ -78,8 +78,11 @@ ChamsFolder.Name = "KLOUD_Chams"
 ChamsFolder.Parent = GuiParent
 
 local function CreatePlayerCham(Plr)
+    if not Plr or Plr == LocalPlayer then return end
     if not Plr.Character then return end
-    if ChamsFolder:FindFirstChild(Plr.Name) then return end
+    local existing = ChamsFolder:FindFirstChild(Plr.Name)
+    if existing then existing:Destroy() end
+    
     local folder = Instance.new("Folder", ChamsFolder)
     folder.Name = Plr.Name
     for _, v in pairs(Plr.Character:GetChildren()) do
@@ -94,6 +97,14 @@ local function CreatePlayerCham(Plr)
             box.Parent = folder
         end
     end
+    
+    local hum = Plr.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.Died:Connect(function()
+            local f = ChamsFolder:FindFirstChild(Plr.Name)
+            if f then f:Destroy() end
+        end)
+    end
 end
 
 local function RemovePlayerCham(Plr)
@@ -101,46 +112,29 @@ local function RemovePlayerCham(Plr)
     if f then f:Destroy() end
 end
 
-local function CreateCoinChams()
-    pcall(function()
-        local cf = Instance.new("Folder", ChamsFolder)
-        cf.Name = "Coins"
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("coin") or obj.Name:lower():find("cash")) then
-                local box = Instance.new("BoxHandleAdornment")
-                box.Size = obj.Size
-                box.Adornee = obj
-                box.AlwaysOnTop = true
-                box.ZIndex = 5
-                box.Transparency = 0.2
-                box.Color3 = Color3.fromRGB(255, 215, 0)
-                box.Parent = cf
-            end
+local function SetupCharAdded(Plr)
+    if Plr == LocalPlayer then return end
+    Plr.CharacterAdded:Connect(function(char)
+        char:WaitForChild("HumanoidRootPart", 10)
+        task.wait(1)
+        if Config.PlayerChams then
+            CreatePlayerCham(Plr)
         end
+    end)
+    Plr.CharacterRemoving:Connect(function()
+        RemovePlayerCham(Plr)
     end)
 end
 
-local function CreateGunChams()
-    pcall(function()
-        local gf = Instance.new("Folder", ChamsFolder)
-        gf.Name = "Guns"
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("Tool") or (obj:IsA("BasePart") and obj.Name:lower():find("gun")) then
-                local part = obj:IsA("Tool") and obj:FindFirstChildOfClass("BasePart") or obj
-                if part then
-                    local box = Instance.new("BoxHandleAdornment")
-                    box.Size = part.Size
-                    box.Adornee = part
-                    box.AlwaysOnTop = true
-                    box.ZIndex = 5
-                    box.Transparency = 0.2
-                    box.Color3 = Color3.fromRGB(0, 255, 100)
-                    box.Parent = gf
-                end
-            end
-        end
-    end)
+for _, p in pairs(Players:GetPlayers()) do
+    SetupCharAdded(p)
 end
+Players.PlayerAdded:Connect(function(p)
+    SetupCharAdded(p)
+end)
+Players.PlayerRemoving:Connect(function(p)
+    RemovePlayerCham(p)
+end)
 
 local function SetFullbright(state)
     local lt = game:GetService("Lighting")
@@ -206,7 +200,6 @@ CloseBtn.AutoButtonColor = false
 CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Colors.Close}):Play() end)
 CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Colors.TextDim}):Play() end)
 
--- ============ ПЛАВАЮЩАЯ КНОПКА (Reopen) ============
 local ReopenBtn = Instance.new("TextButton", sg)
 ReopenBtn.Size = UDim2.new(0, 80, 0, 35)
 ReopenBtn.Position = UDim2.new(0, 20, 0, 100)
@@ -225,13 +218,8 @@ local rbs = Instance.new("UIStroke", ReopenBtn)
 rbs.Color = Colors.Glow
 rbs.Thickness = 2
 rbs.Transparency = 0.3
-
-ReopenBtn.MouseEnter:Connect(function()
-    TweenService:Create(ReopenBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Panel}):Play()
-end)
-ReopenBtn.MouseLeave:Connect(function()
-    TweenService:Create(ReopenBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Bg}):Play()
-end)
+ReopenBtn.MouseEnter:Connect(function() TweenService:Create(ReopenBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Panel}):Play() end)
+ReopenBtn.MouseLeave:Connect(function() TweenService:Create(ReopenBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Bg}):Play() end)
 
 local MinArrow = Instance.new("TextButton", sg)
 MinArrow.Size = UDim2.new(0, 25, 0, 40)
@@ -419,14 +407,6 @@ local function AddTab(name, icon, contentFunc)
 end
 
 AddTab("Main", "❖", function()
-    AddToggle("Auto Farm", Config.AutoFarm, function(v) Config.AutoFarm = v end)
-    AddToggle("Coin Chams", Config.CoinChams, function(v)
-        Config.CoinChams = v
-        if v then CreateCoinChams() else
-            local c = ChamsFolder:FindFirstChild("Coins")
-            if c then c:Destroy() end
-        end
-    end)
     AddToggle("Player Chams", Config.PlayerChams, function(v)
         Config.PlayerChams = v
         if v then
@@ -435,14 +415,6 @@ AddTab("Main", "❖", function()
             end
         else
             for _, p in pairs(Players:GetPlayers()) do RemovePlayerCham(p) end
-        end
-    end)
-    AddToggle("Automatically Grab Gun", Config.AutoGrabGun, function(v) Config.AutoGrabGun = v end)
-    AddToggle("Gun Dropped Cham", Config.GunDroppedCham, function(v)
-        Config.GunDroppedCham = v
-        if v then CreateGunChams() else
-            local g = ChamsFolder:FindFirstChild("Guns")
-            if g then g:Destroy() end
         end
     end)
 end)
@@ -470,15 +442,6 @@ AddTab("Player", "♂", function()
     AddToggle("Noclip", Config.Noclip, function(v) Config.Noclip = v end)
 end)
 
-AddTab("Emotes", "☺", function()
-    AddButton("Sit", function()
-        local h = GetHum() if h then h.Sit = true end
-    end)
-    AddButton("Reset Character", function()
-        local h = GetHum() if h then h.Health = 0 end
-    end)
-end)
-
 AddTab("Server", "≣", function()
     AddButton("Rejoin", function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer)
@@ -492,7 +455,7 @@ AddTab("Settings", "⚙", function()
         Camera.FieldOfView = v
     end)
     AddToggle("Lock FOV", Config.FOVLocked, function(v) Config.FOVLocked = v end)
-    AddButton("Destroy GUI (Полностью выгрузить)", function()
+    AddButton("Destroy GUI", function()
         sg:Destroy()
         ChamsFolder:Destroy()
         SetFullbright(false)
@@ -510,15 +473,12 @@ Tabs["Main"].btn.TextColor3 = Colors.Text
 CurrentTab = "Main"
 Tabs["Main"].func()
 
--- ============ СИСТЕМА ЗАКРЫТИЯ / ОТКРЫТИЯ ============
--- X — скрывает меню и показывает плавающую кнопку
 CloseBtn.MouseButton1Click:Connect(function()
     Main.Visible = false
     MinArrow.Visible = false
     ReopenBtn.Visible = true
 end)
 
--- Плавающая кнопка Kloud — возвращает меню
 ReopenBtn.MouseButton1Click:Connect(function()
     Main.Visible = true
     MinArrow.Visible = true
@@ -526,13 +486,11 @@ ReopenBtn.MouseButton1Click:Connect(function()
     MinArrow.Text = "<"
 end)
 
--- Стрелка < — сворачивание в стрелку >
 MinArrow.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
     MinArrow.Text = Main.Visible and "<" or ">"
 end)
 
--- RightShift — быстрое скрытие/показ
 UserInput.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
@@ -555,9 +513,9 @@ UserInput.JumpRequest:Connect(function()
     end
 end)
 
--- Auto Pass Bomb
+-- Auto Pass Bomb — телепорт + поворот к игроку
 task.spawn(function()
-    while task.wait(0.2) do
+    while task.wait(0.15) do
         if Config.AutoPassBomb and HasBomb() then
             local target = GetClosestPlayer()
             local root = GetRoot()
@@ -565,7 +523,9 @@ task.spawn(function()
                 local tr = target.Character:FindFirstChild("HumanoidRootPart")
                 if tr then
                     pcall(function()
-                        root.CFrame = tr.CFrame * CFrame.new(0, 0, -3)
+                        local targetPos = tr.Position
+                        local myPos = targetPos + (tr.CFrame.LookVector * 3)
+                        root.CFrame = CFrame.new(myPos, targetPos)
                     end)
                 end
             end
@@ -573,40 +533,7 @@ task.spawn(function()
     end
 end)
 
-task.spawn(function()
-    while task.wait(0.3) do
-        if Config.AutoGrabGun then
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("Tool") and obj.Name:lower():find("gun") then
-                    local root = GetRoot()
-                    local part = obj:FindFirstChildOfClass("BasePart")
-                    if root and part and (root.Position - part.Position).Magnitude < 20 then
-                        pcall(function() obj.Parent = LocalPlayer.Backpack end)
-                    end
-                end
-            end
-        end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(0.5) do
-        if Config.AutoFarm then
-            local root = GetRoot()
-            if root then
-                local closest, dist = nil, math.huge
-                for _, obj in pairs(workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and (obj.Name:lower():find("coin") or obj.Name:lower():find("cash")) then
-                        local d = (root.Position - obj.Position).Magnitude
-                        if d < dist then dist = d closest = obj end
-                    end
-                end
-                if closest then root.CFrame = CFrame.new(closest.Position + Vector3.new(0, 3, 0)) end
-            end
-        end
-    end
-end)
-
+-- Auto Dodge Bomb
 task.spawn(function()
     while task.wait(0.1) do
         if Config.AutoDodgeBomb and not HasBomb() then
