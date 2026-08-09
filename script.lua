@@ -27,7 +27,7 @@ local Config = {
     AutoDodgeBomb=false, AutoPassBomb=false,
     FlyEnabled=false, FlySpeed=50,
     Reflections=false, MotionBlur=false, MotionBlurIntensity=20,
-    Saturation=0, CurrentTheme="Default",
+    Saturation=0, CurrentTheme="Default", FPSBoost=false,
 }
 Config.AmbientBackup = game:GetService("Lighting").Ambient
 Config.FogEndBackup = game:GetService("Lighting").FogEnd
@@ -119,7 +119,6 @@ local function StartFly()
 end
 local function StopFly() if flyBV then flyBV:Destroy() flyBV = nil end if flyBG then flyBG:Destroy() flyBG = nil end end
 
--- ========== VISUALS ==========
 local function SetReflections(s)
     Config.Reflections = s
     pcall(function()
@@ -163,8 +162,7 @@ local function SetSaturation(val)
     pcall(function()
         local lt = game:GetService("Lighting")
         local cc = lt:FindFirstChild("KloudSaturation") or Instance.new("ColorCorrectionEffect", lt)
-        cc.Name = "KloudSaturation"
-        cc.Saturation = val
+        cc.Name = "KloudSaturation" cc.Saturation = val
     end)
 end
 
@@ -175,11 +173,162 @@ local function SetTime(timeStr)
         elseif timeStr == "Noon" then lt.ClockTime = 14
         elseif timeStr == "Evening" then lt.ClockTime = 18
         elseif timeStr == "Night" then lt.ClockTime = 0
-        elseif timeStr == "Sunrise" then lt.ClockTime = 6 end
+        elseif timeStr == "Midnight" then lt.ClockTime = 23
+        elseif timeStr == "Sunrise" then lt.ClockTime = 6
+        elseif timeStr == "Sunset" then lt.ClockTime = 19 end
     end)
 end
 
--- Motion blur tracking
+-- ========== SKYBOX ==========
+local Skyboxes = {
+    Realistic = {
+        Up = "rbxassetid://6444884785", Dn = "rbxassetid://6444884785",
+        Lf = "rbxassetid://6444884785", Rt = "rbxassetid://6444884785",
+        Ft = "rbxassetid://6444884785", Bk = "rbxassetid://6444884785",
+    },
+    Sunset = {
+        Up = "rbxassetid://271042516", Dn = "rbxassetid://271077243",
+        Lf = "rbxassetid://271077958", Rt = "rbxassetid://271077996",
+        Ft = "rbxassetid://271077829", Bk = "rbxassetid://271077869",
+    },
+    Space = {
+        Up = "rbxassetid://159454299", Dn = "rbxassetid://159454296",
+        Lf = "rbxassetid://159454286", Rt = "rbxassetid://159454300",
+        Ft = "rbxassetid://159454288", Bk = "rbxassetid://159454293",
+    },
+    Nebula = {
+        Up = "rbxassetid://159454299", Dn = "rbxassetid://159454296",
+        Lf = "rbxassetid://159454286", Rt = "rbxassetid://159454300",
+        Ft = "rbxassetid://159454288", Bk = "rbxassetid://159454293",
+    },
+    Clouds = {
+        Up = "rbxassetid://456977674", Dn = "rbxassetid://456977674",
+        Lf = "rbxassetid://456977674", Rt = "rbxassetid://456977674",
+        Ft = "rbxassetid://456977674", Bk = "rbxassetid://456977674",
+    },
+}
+
+local function SetSkybox(name)
+    pcall(function()
+        local lt = game:GetService("Lighting")
+        -- Удаляем старый Sky
+        for _, v in pairs(lt:GetChildren()) do
+            if v:IsA("Sky") then v:Destroy() end
+        end
+        if name == "Default" then return end
+        
+        local sky = Instance.new("Sky")
+        sky.Name = "KloudSky"
+        if Skyboxes[name] then
+            local s = Skyboxes[name]
+            sky.SkyboxUp = s.Up sky.SkyboxDn = s.Dn
+            sky.SkyboxLf = s.Lf sky.SkyboxRt = s.Rt
+            sky.SkyboxFt = s.Ft sky.SkyboxBk = s.Bk
+        end
+        sky.StarCount = (name == "Space" or name == "Nebula") and 3000 or 0
+        sky.Parent = lt
+    end)
+end
+
+-- ========== FPS BOOST ==========
+local originalTerrainDecoration = nil
+local originalGlobalShadows = nil
+local originalCastShadow = {}
+
+local function SetFPSBoost(s)
+    Config.FPSBoost = s
+    pcall(function()
+        local lt = game:GetService("Lighting")
+        if s then
+            -- Сохраняем оригиналы
+            if originalGlobalShadows == nil then originalGlobalShadows = lt.GlobalShadows end
+            if workspace.Terrain and originalTerrainDecoration == nil then
+                originalTerrainDecoration = workspace.Terrain.Decoration
+            end
+            
+            -- Отключаем тени
+            lt.GlobalShadows = false
+            lt.Brightness = 2
+            
+            -- Убираем траву
+            if workspace.Terrain then workspace.Terrain.Decoration = false end
+            
+            -- Отключаем всё лишнее
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    if originalCastShadow[v] == nil then originalCastShadow[v] = v.CastShadow end
+                    v.CastShadow = false
+                    v.Material = Enum.Material.SmoothPlastic
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
+                    v.Enabled = false
+                elseif v:IsA("Decal") or v:IsA("Texture") then
+                    v.Transparency = 1
+                end
+            end
+            
+            -- Убираем эффекты Lighting (кроме наших)
+            for _, v in pairs(lt:GetChildren()) do
+                if (v:IsA("BloomEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect")) 
+                and not v.Name:find("Kloud") then
+                    v.Enabled = false
+                end
+            end
+        else
+            -- Возвращаем оригиналы
+            if originalGlobalShadows ~= nil then lt.GlobalShadows = originalGlobalShadows end
+            if workspace.Terrain and originalTerrainDecoration ~= nil then workspace.Terrain.Decoration = originalTerrainDecoration end
+            for part, val in pairs(originalCastShadow) do
+                if part and part.Parent then part.CastShadow = val end
+            end
+            for _, v in pairs(game:GetService("Lighting"):GetChildren()) do
+                if v:IsA("BloomEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") then
+                    v.Enabled = true
+                end
+            end
+        end
+    end)
+end
+
+-- ========== COPY OUTFIT ==========
+local function CopyOutfit(targetPlayer)
+    pcall(function()
+        if not targetPlayer or not targetPlayer.Character then return end
+        local myChar = LocalPlayer.Character
+        if not myChar then return end
+        
+        local targetHum = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+        local myHum = myChar:FindFirstChildOfClass("Humanoid")
+        if not targetHum or not myHum then return end
+        
+        -- Удаляем все свои аксессуары/шляпы
+        for _, v in pairs(myChar:GetChildren()) do
+            if v:IsA("Accessory") or v:IsA("Hat") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
+                v:Destroy()
+            end
+        end
+        
+        -- Копируем всё с цели
+        for _, v in pairs(targetPlayer.Character:GetChildren()) do
+            if v:IsA("Accessory") or v:IsA("Hat") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
+                local clone = v:Clone()
+                clone.Parent = myChar
+            end
+        end
+        
+        -- Копируем HumanoidDescription (если возможно)
+        pcall(function()
+            local desc = targetHum:GetAppliedDescription()
+            myHum:ApplyDescription(desc)
+        end)
+        
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "✅ Copy Outfit",
+            Text = "Скопирован внешний вид: " .. targetPlayer.Name,
+            Duration = 4
+        })
+    end)
+end
+
 local lastCamCF = Camera.CFrame
 
 -- ============ UI ============
@@ -191,7 +340,6 @@ Main.BackgroundColor3 = Colors.Bg Main.BorderSizePixel = 0 Main.Active = true Ma
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 local glow = Instance.new("UIStroke", Main) glow.Color = Colors.Glow glow.Thickness = 2 glow.Transparency = 0.3
 
--- LED полосы
 local ledL = Instance.new("Frame", Main) ledL.Size = UDim2.new(0,2,1,-20) ledL.Position = UDim2.new(0,-4,0,10)
 ledL.BackgroundColor3 = Color3.new(1,1,1) ledL.BorderSizePixel = 0 ledL.BackgroundTransparency = 0.3
 local lgL = Instance.new("UIGradient", ledL)
@@ -353,6 +501,22 @@ local function AddDropdown(name, options, default, callback)
     end)
 end
 
+local function AddTextbox(name, placeholder, callback)
+    local frame = Instance.new("Frame", Content) frame.Size = UDim2.new(1,-5,0,45)
+    frame.BackgroundColor3 = Colors.Panel frame.BackgroundTransparency = Colors.Transparency frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
+    local lbl = Instance.new("TextLabel", frame) lbl.Size = UDim2.new(0.4,0,1,0) lbl.Position = UDim2.new(0,15,0,0)
+    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.Font = Enum.Font.Gotham lbl.TextSize = 13
+    lbl.TextColor3 = Colors.Text lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local tb = Instance.new("TextBox", frame) tb.Size = UDim2.new(0.6,-20,0,25)
+    tb.Position = UDim2.new(0.4,5,0.5,-12) tb.BackgroundColor3 = Colors.Panel2
+    tb.Text = "" tb.PlaceholderText = placeholder tb.Font = Enum.Font.Gotham tb.TextSize = 12
+    tb.TextColor3 = Colors.Text tb.PlaceholderColor3 = Colors.TextDim tb.BorderSizePixel = 0
+    tb.ClearTextOnFocus = false
+    Instance.new("UICorner", tb).CornerRadius = UDim.new(0,4)
+    tb.FocusLost:Connect(function() callback(tb.Text) end)
+end
+
 local function AddTab(name, icon, contentFunc)
     local btn = Instance.new("TextButton", Sidebar) btn.Size = UDim2.new(1,0,0,38)
     btn.BackgroundColor3 = Colors.Panel btn.BackgroundTransparency = 1
@@ -389,6 +553,16 @@ AddTab("Universal", "🌐", function()
     AddToggle("Noclip", Config.Noclip, function(v) Config.Noclip = v end)
     AddToggle("Fly", Config.FlyEnabled, function(v) Config.FlyEnabled = v if v then StartFly() else StopFly() end end)
     AddSlider("Fly Speed", 10, 100, Config.FlySpeed, function(v) Config.FlySpeed = v end)
+    AddToggle("FPS Boost", Config.FPSBoost, function(v) SetFPSBoost(v) end)
+    AddTextbox("Copy Outfit (введи ник)", "Player name...", function(txt)
+        if txt == "" then return end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Name:lower():find(txt:lower()) and p ~= LocalPlayer then
+                CopyOutfit(p) return
+            end
+        end
+        game.StarterGui:SetCore("SendNotification", {Title="❌ Не найден", Text="Игрок не найден", Duration=3})
+    end)
 end)
 
 AddTab("Visuals", "🎨", function()
@@ -396,7 +570,8 @@ AddTab("Visuals", "🎨", function()
     AddSlider("Blur Intensity", 5, 50, Config.MotionBlurIntensity, function(v) Config.MotionBlurIntensity = v end)
     AddSlider("Saturation", -100, 100, Config.Saturation, function(v) SetSaturation(v / 100) end)
     AddToggle("Realistic (Reflections)", Config.Reflections, function(v) SetReflections(v) end)
-    AddDropdown("Time of Day", {"Day","Noon","Evening","Night","Sunrise"}, "Day", function(t) SetTime(t) end)
+    AddDropdown("Time of Day", {"Day","Noon","Evening","Sunset","Night","Midnight","Sunrise"}, "Day", function(t) SetTime(t) end)
+    AddDropdown("Skybox", {"Default","Realistic","Sunset","Space","Nebula","Clouds"}, "Default", function(s) SetSkybox(s) end)
     AddToggle("Fullbright", Config.Fullbright, function(v) Config.Fullbright = v SetFullbright(v) end)
     AddToggle("Remove Fog", Config.RemoveFog, function(v) Config.RemoveFog = v SetRemoveFog(v) end)
 end)
@@ -425,9 +600,10 @@ end)
 AddTab("Settings", "⚙", function()
     AddButton("Destroy GUI", function()
         sg:Destroy() ChamsFolder:Destroy() ESPFolder:Destroy()
-        SetFullbright(false) SetRemoveFog(false) SetReflections(false) SetMotionBlur(false) StopFly()
+        SetFullbright(false) SetRemoveFog(false) SetReflections(false) SetMotionBlur(false) SetFPSBoost(false) StopFly()
         pcall(function() local lt = game:GetService("Lighting")
             local s = lt:FindFirstChild("KloudSaturation") if s then s:Destroy() end
+            for _, v in pairs(lt:GetChildren()) do if v:IsA("Sky") and v.Name == "KloudSky" then v:Destroy() end end
         end)
         Camera.FieldOfView = 70
         local h = GetHum() if h then h.WalkSpeed = 16 h.JumpPower = 50 end
@@ -453,9 +629,7 @@ UserInput.JumpRequest:Connect(function()
     if Config.InfJump then local h = GetHum() if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end
 end)
 
--- MAIN LOOP
 RunService.RenderStepped:Connect(function()
-    -- Fly
     if Config.FlyEnabled and flyBV and flyBG then
         local root = GetRoot()
         if root then
@@ -470,14 +644,11 @@ RunService.RenderStepped:Connect(function()
             flyBV.Velocity = move * Config.FlySpeed flyBG.CFrame = cam
         end
     end
-    -- FOV Lock
     if Config.FOVLocked and Camera.FieldOfView ~= Config.FOV then Camera.FieldOfView = Config.FOV end
-    -- Noclip
     if Config.Noclip then
         local c = LocalPlayer.Character
         if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end end end
     end
-    -- Motion Blur
     if Config.MotionBlur then
         pcall(function()
             local blur = game:GetService("Lighting"):FindFirstChild("KloudMotionBlur")
@@ -494,7 +665,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Auto Pass Bomb
 task.spawn(function()
     while task.wait(0.15) do
         if Config.AutoPassBomb and HasBomb() then
@@ -510,7 +680,6 @@ task.spawn(function()
     end
 end)
 
--- Auto Dodge Bomb
 task.spawn(function()
     while task.wait(0.1) do
         if Config.AutoDodgeBomb and not HasBomb() then
@@ -535,6 +704,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     local h = char:WaitForChild("Humanoid") task.wait(0.3)
     h.WalkSpeed = Config.WalkSpeed h.JumpPower = Config.JumpPower
     if Config.FlyEnabled then StopFly() task.wait(0.5) StartFly() end
+    if Config.FPSBoost then task.wait(1) SetFPSBoost(true) end
 end)
 
 pcall(function() game.StarterGui:SetCore("SendNotification", {Title="⚡ Kloud Hub", Text="Loaded! RightShift = hide", Duration=5}) end)
