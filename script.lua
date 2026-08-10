@@ -1,4 +1,4 @@
--- ⚡ Dark Visual Panel v2 | Original Style
+-- ⚡ Kloud Hub | 3D Menu Style
 local Players = game.Players or game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInput = game:GetService("UserInputService")
@@ -12,22 +12,23 @@ local GuiParent = (gethui and gethui()) or game:GetService("CoreGui")
 local IS_MOBILE = UserInput.TouchEnabled and not UserInput.KeyboardEnabled
 
 pcall(function() 
-    local old = GuiParent:FindFirstChild("DarkPanel") if old then old:Destroy() end
+    local old = GuiParent:FindFirstChild("KloudHub3D") if old then old:Destroy() end
     local oldH = GuiParent:FindFirstChild("KloudHUD") if oldH then oldH:Destroy() end
     local oldM = GuiParent:FindFirstChild("KloudMobile") if oldM then oldM:Destroy() end
 end)
 
--- ORIGINAL COLORS (оранжево-чёрный из твоего скрипта)
 local Colors = {
-    Bg = Color3.fromRGB(15, 15, 15),
-    Panel = Color3.fromRGB(22, 22, 22),
-    Panel2 = Color3.fromRGB(30, 30, 30),
-    Accent = Color3.fromRGB(255, 120, 30),
-    Glow = Color3.fromRGB(255, 130, 30),
-    Text = Color3.fromRGB(240, 240, 240),
-    TextDim = Color3.fromRGB(180, 180, 180),
-    ToggleOff = Color3.fromRGB(50, 50, 50),
-    Close = Color3.fromRGB(100, 30, 30),
+    Bg = Color3.fromRGB(12, 15, 20),
+    Panel = Color3.fromRGB(18, 22, 30),
+    Panel2 = Color3.fromRGB(25, 30, 40),
+    Panel3 = Color3.fromRGB(25, 35, 50),
+    Accent = Color3.fromRGB(0, 140, 255),
+    AccentBright = Color3.fromRGB(0, 120, 255),
+    Text = Color3.fromRGB(220, 230, 255),
+    TextBright = Color3.fromRGB(255, 255, 255),
+    TextDim = Color3.fromRGB(150, 160, 180),
+    ToggleOff = Color3.fromRGB(40, 45, 55),
+    Close = Color3.fromRGB(100, 30, 40),
 }
 
 local Config = {
@@ -198,10 +199,10 @@ local function SetParticles(state)
     end
 end
 
-local ChamsFolder = Instance.new("Folder") ChamsFolder.Name = "DP_Chams" ChamsFolder.Parent = GuiParent
-local ESPFolder = Instance.new("Folder") ESPFolder.Name = "DP_ESP" ESPFolder.Parent = GuiParent
-local RoleESPFolder = Instance.new("Folder") RoleESPFolder.Name = "DP_RoleESP" RoleESPFolder.Parent = GuiParent
-local PredictFolder = Instance.new("Folder") PredictFolder.Name = "DP_Predict" PredictFolder.Parent = workspace
+local ChamsFolder = Instance.new("Folder") ChamsFolder.Name = "KH_Chams" ChamsFolder.Parent = GuiParent
+local ESPFolder = Instance.new("Folder") ESPFolder.Name = "KH_ESP" ESPFolder.Parent = GuiParent
+local RoleESPFolder = Instance.new("Folder") RoleESPFolder.Name = "KH_RoleESP" RoleESPFolder.Parent = GuiParent
+local PredictFolder = Instance.new("Folder") PredictFolder.Name = "KH_Predict" PredictFolder.Parent = workspace
 
 local function CreatePlayerCham(Plr)
     if not Plr or Plr == LocalPlayer or not Plr.Character then return end
@@ -211,7 +212,7 @@ local function CreatePlayerCham(Plr)
     hl.Adornee = Plr.Character
     hl.FillColor = Colors.Accent
     hl.FillTransparency = 0.6
-    hl.OutlineColor = Colors.Glow
+    hl.OutlineColor = Colors.AccentBright
     hl.OutlineTransparency = 0
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Parent = ChamsFolder
@@ -233,14 +234,9 @@ local function CreatePredictESP(Plr)
     if not Plr or Plr == LocalPlayer or not Plr.Character then return end
     local ex = PredictFolder:FindFirstChild(Plr.Name) if ex then ex:Destroy() end
     local part = Instance.new("Part")
-    part.Name = Plr.Name
-    part.Anchored = true
-    part.CanCollide = false
-    part.Material = Enum.Material.Neon
-    part.Color = Colors.Accent
-    part.Size = Vector3.new(0.15, 0.15, 1)
-    part.Transparency = 0.3
-    part.Parent = PredictFolder
+    part.Name = Plr.Name part.Anchored = true part.CanCollide = false
+    part.Material = Enum.Material.Neon part.Color = Colors.Accent
+    part.Size = Vector3.new(0.15, 0.15, 1) part.Transparency = 0.3 part.Parent = PredictFolder
 end
 local function RemovePredictESP(Plr) local f = PredictFolder:FindFirstChild(Plr.Name) if f then f:Destroy() end end
 
@@ -260,9 +256,7 @@ local function UpdatePredictESP()
                         line.CFrame = CFrame.new(root.Position, predictPos) * CFrame.new(0, 0, -dist/2)
                         line.Transparency = 0.2
                         line.Color = speed > 20 and Color3.fromRGB(255, 100, 100) or Colors.Accent
-                    else
-                        line.Transparency = 1
-                    end
+                    else line.Transparency = 1 end
                 end
             end
         end
@@ -322,19 +316,16 @@ local function StopFly() if flyBV then flyBV:Destroy() flyBV = nil end if flyBG 
 local function SetGodRays(s)
     Config.GodRays = s
     if s then
-        local sr = Lighting:FindFirstChild("DPGodRays") or Instance.new("SunRaysEffect", Lighting)
-        sr.Name = "DPGodRays" sr.Intensity = 0.5 sr.Spread = 1
-        local bloom = Lighting:FindFirstChild("DPLightBloom") or Instance.new("BloomEffect", Lighting)
-        bloom.Name = "DPLightBloom" bloom.Intensity = 0.8 bloom.Size = 30 bloom.Threshold = 0.7
-        local dof = Lighting:FindFirstChild("DPDOF") or Instance.new("DepthOfFieldEffect", Lighting)
-        dof.Name = "DPDOF" dof.FarIntensity = 0.1 dof.FocusDistance = 50 dof.InFocusRadius = 30 dof.NearIntensity = 0
+        local sr = Lighting:FindFirstChild("KHGodRays") or Instance.new("SunRaysEffect", Lighting)
+        sr.Name = "KHGodRays" sr.Intensity = 0.5 sr.Spread = 1
+        local bloom = Lighting:FindFirstChild("KHLightBloom") or Instance.new("BloomEffect", Lighting)
+        bloom.Name = "KHLightBloom" bloom.Intensity = 0.8 bloom.Size = 30 bloom.Threshold = 0.7
         Lighting.GlobalShadows = true Lighting.Brightness = 2
         Lighting.EnvironmentDiffuseScale = 0.5 Lighting.EnvironmentSpecularScale = 0.5
         Lighting.ExposureCompensation = 0.3
     else
-        local sr = Lighting:FindFirstChild("DPGodRays") if sr then sr:Destroy() end
-        local bloom = Lighting:FindFirstChild("DPLightBloom") if bloom then bloom:Destroy() end
-        local dof = Lighting:FindFirstChild("DPDOF") if dof then dof:Destroy() end
+        local sr = Lighting:FindFirstChild("KHGodRays") if sr then sr:Destroy() end
+        local bloom = Lighting:FindFirstChild("KHLightBloom") if bloom then bloom:Destroy() end
         Lighting.Brightness = Config.BrightnessBackup
         Lighting.EnvironmentDiffuseScale = 0 Lighting.EnvironmentSpecularScale = 0
         Lighting.ExposureCompensation = 0
@@ -344,57 +335,47 @@ end
 local function SetReflections(s)
     Config.Reflections = s
     if s then
-        local bloom = Lighting:FindFirstChild("DPBloom") or Instance.new("BloomEffect", Lighting)
-        bloom.Name = "DPBloom" bloom.Intensity = 0.3 bloom.Size = 24 bloom.Threshold = 0.8
-    else
-        local b = Lighting:FindFirstChild("DPBloom") if b then b:Destroy() end
-    end
+        local bloom = Lighting:FindFirstChild("KHBloom") or Instance.new("BloomEffect", Lighting)
+        bloom.Name = "KHBloom" bloom.Intensity = 0.3 bloom.Size = 24 bloom.Threshold = 0.8
+    else local b = Lighting:FindFirstChild("KHBloom") if b then b:Destroy() end end
 end
 
 local function SetMotionBlur(enabled)
     Config.MotionBlur = enabled
     if enabled then
-        local blur = Lighting:FindFirstChild("DPMotionBlur") or Instance.new("BlurEffect", Lighting)
-        blur.Name = "DPMotionBlur" blur.Size = 0
-    else
-        local blur = Lighting:FindFirstChild("DPMotionBlur") if blur then blur:Destroy() end
-    end
+        local blur = Lighting:FindFirstChild("KHMotionBlur") or Instance.new("BlurEffect", Lighting)
+        blur.Name = "KHMotionBlur" blur.Size = 0
+    else local blur = Lighting:FindFirstChild("KHMotionBlur") if blur then blur:Destroy() end end
 end
 
 local function SetSoftBlur(s)
     Config.SoftBlur = s
     if s then
-        local b = Lighting:FindFirstChild("DPSoftBlur") or Instance.new("BlurEffect", Lighting)
-        b.Name = "DPSoftBlur" b.Size = 4
-    else
-        local b = Lighting:FindFirstChild("DPSoftBlur") if b then b:Destroy() end
-    end
+        local b = Lighting:FindFirstChild("KHSoftBlur") or Instance.new("BlurEffect", Lighting)
+        b.Name = "KHSoftBlur" b.Size = 4
+    else local b = Lighting:FindFirstChild("KHSoftBlur") if b then b:Destroy() end end
 end
 
 local function SetColorFilter(s)
     Config.ColorFilter = s
     if s then
-        local cc = Lighting:FindFirstChild("DPColorFilter") or Instance.new("ColorCorrectionEffect", Lighting)
-        cc.Name = "DPColorFilter" cc.Contrast = 0.2 cc.Brightness = 0.05
-    else
-        local cc = Lighting:FindFirstChild("DPColorFilter") if cc then cc:Destroy() end
-    end
+        local cc = Lighting:FindFirstChild("KHColorFilter") or Instance.new("ColorCorrectionEffect", Lighting)
+        cc.Name = "KHColorFilter" cc.Contrast = 0.2 cc.Brightness = 0.05
+    else local cc = Lighting:FindFirstChild("KHColorFilter") if cc then cc:Destroy() end end
 end
 
 local function SetStrongBloom(s)
     Config.StrongBloom = s
     if s then
-        local b = Lighting:FindFirstChild("DPStrongBloom") or Instance.new("BloomEffect", Lighting)
-        b.Name = "DPStrongBloom" b.Intensity = 1 b.Size = 24 b.Threshold = 0.5
-    else
-        local b = Lighting:FindFirstChild("DPStrongBloom") if b then b:Destroy() end
-    end
+        local b = Lighting:FindFirstChild("KHStrongBloom") or Instance.new("BloomEffect", Lighting)
+        b.Name = "KHStrongBloom" b.Intensity = 1 b.Size = 24 b.Threshold = 0.5
+    else local b = Lighting:FindFirstChild("KHStrongBloom") if b then b:Destroy() end end
 end
 
 local function SetSaturation(val)
     Config.Saturation = val
-    local cc = Lighting:FindFirstChild("DPSaturation") or Instance.new("ColorCorrectionEffect", Lighting)
-    cc.Name = "DPSaturation" cc.Saturation = val
+    local cc = Lighting:FindFirstChild("KHSaturation") or Instance.new("ColorCorrectionEffect", Lighting)
+    cc.Name = "KHSaturation" cc.Saturation = val
 end
 
 local timeMap = {Day=12, Noon=14, Evening=18, Sunset=19, Night=0, Midnight=23, Sunrise=6}
@@ -404,7 +385,7 @@ local Skyboxes = {Realistic="rbxassetid://6444884785", Sunset="rbxassetid://2710
 local function SetSkybox(name)
     for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
     if name == "Default" then return end
-    local sky = Instance.new("Sky") sky.Name = "DPSky"
+    local sky = Instance.new("Sky") sky.Name = "KHSky"
     local id = Skyboxes[name]
     if id then sky.SkyboxUp=id sky.SkyboxDn=id sky.SkyboxLf=id sky.SkyboxRt=id sky.SkyboxFt=id sky.SkyboxBk=id end
     sky.StarCount = (name == "Space") and 3000 or 0
@@ -454,10 +435,10 @@ local topHud = Instance.new("Frame", hudGui)
 topHud.Size = UDim2.new(0, 220, 0, 22)
 topHud.Position = UDim2.new(0, 10, 0, 10)
 topHud.BackgroundColor3 = Colors.Bg
-topHud.BackgroundTransparency = 0.2
+topHud.BackgroundTransparency = 0.3
 topHud.BorderSizePixel = 0
 Instance.new("UICorner", topHud).CornerRadius = UDim.new(0, 4)
-local topHudStroke = Instance.new("UIStroke", topHud) topHudStroke.Color = Colors.Accent topHudStroke.Thickness = 1 topHudStroke.Transparency = 0.3
+local topHudStroke = Instance.new("UIStroke", topHud) topHudStroke.Color = Colors.Accent topHudStroke.Thickness = 1.5
 
 local hudLayout = Instance.new("UIListLayout", topHud)
 hudLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -486,11 +467,11 @@ local spectFrame = Instance.new("Frame", hudGui)
 spectFrame.Size = UDim2.new(0, 160, 0, 30)
 spectFrame.Position = UDim2.new(1, -170, 0.35, 0)
 spectFrame.BackgroundColor3 = Colors.Bg
-spectFrame.BackgroundTransparency = 0.2
+spectFrame.BackgroundTransparency = 0.3
 spectFrame.BorderSizePixel = 0
 spectFrame.AutomaticSize = Enum.AutomaticSize.Y
 Instance.new("UICorner", spectFrame).CornerRadius = UDim.new(0, 4)
-local spectStroke = Instance.new("UIStroke", spectFrame) spectStroke.Color = Colors.Accent spectStroke.Thickness = 1 spectStroke.Transparency = 0.3
+local spectStroke = Instance.new("UIStroke", spectFrame) spectStroke.Color = Colors.Accent spectStroke.Thickness = 1.5
 
 local spectTitle = Instance.new("TextLabel", spectFrame)
 spectTitle.Size = UDim2.new(1, -10, 0, 22)
@@ -589,7 +570,7 @@ local function CreateMobileBtn(name, text, pos, callback)
     btn.Active = true
     btn.Draggable = true
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    local st = Instance.new("UIStroke", btn) st.Color = Colors.Accent st.Thickness = 2 st.Transparency = 0.3
+    local st = Instance.new("UIStroke", btn) st.Color = Colors.Accent st.Thickness = 1.5
     btn.MouseButton1Click:Connect(callback)
     return btn
 end
@@ -617,53 +598,52 @@ end)
 local mobileMenu = CreateMobileBtn("Menu", "☰\nMenu", UDim2.new(0, 15, 0.5, -30), function() end)
 mobileMenu.BackgroundColor3 = Colors.Accent
 
--- ============ MAIN UI (в стиле твоего оригинала) ============
-local sg = Instance.new("ScreenGui") sg.Name = "DarkPanel" sg.ResetOnSpawn = false sg.Parent = GuiParent
+-- ============ MAIN UI (3D Menu Style) ============
+local sg = Instance.new("ScreenGui") sg.Name = "KloudHub3D" sg.ResetOnSpawn = false sg.Parent = GuiParent
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 560, 0, 400)
-Main.Position = UDim2.new(0.5, -280, 0.5, -200)
+Main.Size = UDim2.new(0, 700, 0, 480)
+Main.Position = UDim2.new(0.5, -350, 0.5, -240)
 Main.BackgroundColor3 = Colors.Bg
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 Main.Parent = sg
 
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
+local mainStroke = Instance.new("UIStroke", Main)
+mainStroke.Color = Colors.Accent
+mainStroke.Thickness = 1.5
 
--- ОРАНЖЕВАЯ ОБВОДКА (как в оригинале)
-local outline = Instance.new("UIStroke", Main)
-outline.Color = Colors.Accent
-outline.Thickness = 2
+-- Верхняя панель с кнопками-табами
+local TopBar = Instance.new("Frame", Main)
+TopBar.Size = UDim2.new(1, -20, 0, 50)
+TopBar.Position = UDim2.new(0, 10, 0, 10)
+TopBar.BackgroundTransparency = 1
 
--- Title (как в оригинале)
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "Visual Panel"
-Title.TextColor3 = Colors.Accent
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.Parent = Main
+local TopBarLayout = Instance.new("UIListLayout", TopBar)
+TopBarLayout.FillDirection = Enum.FillDirection.Horizontal
+TopBarLayout.Padding = UDim.new(0, 8)
+TopBarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 
--- Close button (как в оригинале)
+-- Close button
 local CloseBtn = Instance.new("TextButton", Main)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -40, 0, 10)
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -45, 0, 15)
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.BackgroundColor3 = Colors.Close
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
 CloseBtn.BorderSizePixel = 0
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 
--- Кнопка Reopen (после закрытия)
+-- Reopen button
 local ReopenBtn = Instance.new("TextButton", sg)
 ReopenBtn.Size = UDim2.new(0, 100, 0, 35)
 ReopenBtn.Position = UDim2.new(0, 20, 0, 100)
 ReopenBtn.BackgroundColor3 = Colors.Bg
-ReopenBtn.Text = "OPEN PANEL"
+ReopenBtn.Text = "OPEN MENU"
 ReopenBtn.Font = Enum.Font.GothamBold
 ReopenBtn.TextSize = 12
 ReopenBtn.TextColor3 = Colors.Accent
@@ -672,76 +652,155 @@ ReopenBtn.Visible = false
 ReopenBtn.Active = true
 ReopenBtn.Draggable = true
 ReopenBtn.AutoButtonColor = false
-Instance.new("UICorner", ReopenBtn).CornerRadius = UDim.new(0, 6)
-local rbs = Instance.new("UIStroke", ReopenBtn) rbs.Color = Colors.Accent rbs.Thickness = 2
+Instance.new("UICorner", ReopenBtn).CornerRadius = UDim.new(0, 8)
+local rbs = Instance.new("UIStroke", ReopenBtn) rbs.Color = Colors.Accent rbs.Thickness = 1.5
 
--- Панель вкладок (сверху, горизонтально, как в оригинале)
-local TabPanel = Instance.new("Frame", Main)
-TabPanel.Size = UDim2.new(1, -40, 0, 40)
-TabPanel.Position = UDim2.new(0, 20, 0, 50)
-TabPanel.BackgroundTransparency = 1
+-- Левая панель (категории)
+local LeftPanel = Instance.new("Frame", Main)
+LeftPanel.Size = UDim2.new(0, 180, 0, 400)
+LeftPanel.Position = UDim2.new(0, 20, 0, 70)
+LeftPanel.BackgroundColor3 = Colors.Panel
+LeftPanel.BorderSizePixel = 0
+Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0, 12)
 
-local TabLayout = Instance.new("UIListLayout", TabPanel)
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.Padding = UDim.new(0, 8)
+local LeftTitle = Instance.new("TextLabel", LeftPanel)
+LeftTitle.Size = UDim2.new(1, 0, 0, 40)
+LeftTitle.Text = "Categories"
+LeftTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LeftTitle.BackgroundTransparency = 1
+LeftTitle.Font = Enum.Font.GothamBold
+LeftTitle.TextSize = 15
 
--- Content area (справа блок, слева блок как в оригинале)
-local Content = Instance.new("ScrollingFrame", Main)
-Content.Size = UDim2.new(1, -40, 1, -110)
-Content.Position = UDim2.new(0, 20, 0, 100)
-Content.BackgroundColor3 = Colors.Panel
+local LeftScroll = Instance.new("ScrollingFrame", LeftPanel)
+LeftScroll.Size = UDim2.new(1, -10, 1, -50)
+LeftScroll.Position = UDim2.new(0, 5, 0, 45)
+LeftScroll.BackgroundTransparency = 1
+LeftScroll.BorderSizePixel = 0
+LeftScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+LeftScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+LeftScroll.ScrollBarThickness = 3
+LeftScroll.ScrollBarImageColor3 = Colors.Accent
+local leftLayout = Instance.new("UIListLayout", LeftScroll)
+leftLayout.Padding = UDim.new(0, 6)
+
+-- Правая панель (контент)
+local RightPanel = Instance.new("Frame", Main)
+RightPanel.Size = UDim2.new(0, 470, 0, 400)
+RightPanel.Position = UDim2.new(0, 210, 0, 70)
+RightPanel.BackgroundColor3 = Colors.Panel
+RightPanel.BorderSizePixel = 0
+Instance.new("UICorner", RightPanel).CornerRadius = UDim.new(0, 12)
+
+local RightTitle = Instance.new("TextLabel", RightPanel)
+RightTitle.Size = UDim2.new(1, 0, 0, 45)
+RightTitle.Text = "Universal"
+RightTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+RightTitle.BackgroundTransparency = 1
+RightTitle.Font = Enum.Font.GothamBold
+RightTitle.TextSize = 22
+
+local Content = Instance.new("ScrollingFrame", RightPanel)
+Content.Size = UDim2.new(1, -20, 1, -55)
+Content.Position = UDim2.new(0, 10, 0, 50)
+Content.BackgroundTransparency = 1
 Content.BorderSizePixel = 0
-Content.CanvasSize = UDim2.new(0,0,0,0)
+Content.CanvasSize = UDim2.new(0, 0, 0, 0)
 Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Content.ScrollBarThickness = 4
 Content.ScrollBarImageColor3 = Colors.Accent
-Instance.new("UICorner", Content).CornerRadius = UDim.new(0, 10)
-local ContentPad = Instance.new("UIPadding", Content)
-ContentPad.PaddingTop = UDim.new(0, 10) ContentPad.PaddingLeft = UDim.new(0, 10) ContentPad.PaddingRight = UDim.new(0, 10)
-Instance.new("UIListLayout", Content).Padding = UDim.new(0,6)
+local contentLayout = Instance.new("UIListLayout", Content)
+contentLayout.Padding = UDim.new(0, 8)
 
 local Tabs = {}
 local CurrentTab = nil
 local function ClearContent() 
     for _, v in ipairs(Content:GetChildren()) do 
-        if not v:IsA("UIListLayout") and not v:IsA("UIPadding") then v:Destroy() end 
+        if not v:IsA("UIListLayout") then v:Destroy() end 
     end 
 end
 
 local function AddToggle(name, default, callback)
-    local frame = Instance.new("Frame", Content) frame.Size = UDim2.new(1,-5,0,38)
-    frame.BackgroundTransparency = 1
-    local lbl = Instance.new("TextLabel", frame) lbl.Size = UDim2.new(1,-70,1,0)
-    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.Font = Enum.Font.Gotham lbl.TextSize = 14
-    lbl.TextColor3 = Colors.Text lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Position = UDim2.new(0,5,0,0)
-    local btn = Instance.new("TextButton", frame) btn.Size = UDim2.new(0,45,0,22) btn.Position = UDim2.new(1,-55,0.5,-11)
-    btn.BackgroundColor3 = default and Colors.Accent or Colors.ToggleOff btn.Text = "" btn.AutoButtonColor = false btn.BorderSizePixel = 0
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+    local row = Instance.new("Frame", Content)
+    row.Size = UDim2.new(.98, 0, 0, 40)
+    row.BackgroundColor3 = Colors.Panel2
+    row.BorderSizePixel = 0
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    
+    local txt = Instance.new("TextLabel", row)
+    txt.Size = UDim2.new(.7, 0, 1, 0)
+    txt.Position = UDim2.new(0, 15, 0, 0)
+    txt.Text = name
+    txt.TextColor3 = Colors.Text
+    txt.BackgroundTransparency = 1
+    txt.Font = Enum.Font.Gotham
+    txt.TextSize = 14
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local toggle = Instance.new("TextButton", row)
+    toggle.Size = UDim2.new(0, 45, 0, 22)
+    toggle.Position = UDim2.new(1, -55, 0.5, -11)
+    toggle.Text = ""
+    toggle.BackgroundColor3 = default and Colors.AccentBright or Colors.ToggleOff
+    toggle.BorderSizePixel = 0
+    toggle.AutoButtonColor = false
+    Instance.new("UICorner", toggle).CornerRadius = UDim.new(1, 0)
+    
+    local dot = Instance.new("Frame", toggle)
+    dot.Size = UDim2.new(0, 18, 0, 18)
+    dot.Position = default and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+    dot.BackgroundColor3 = Colors.TextBright
+    dot.BorderSizePixel = 0
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+    
     local state = default
-    btn.MouseButton1Click:Connect(function()
+    toggle.MouseButton1Click:Connect(function()
         state = not state
-        btn.BackgroundColor3 = state and Colors.Accent or Colors.ToggleOff
+        TweenService:Create(toggle, TweenInfo.new(0.2), {BackgroundColor3 = state and Colors.AccentBright or Colors.ToggleOff}):Play()
+        TweenService:Create(dot, TweenInfo.new(0.2), {Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)}):Play()
         callback(state)
     end)
 end
 
 local function AddSlider(name, min, max, default, callback)
-    local frame = Instance.new("Frame", Content) frame.Size = UDim2.new(1,-5,0,50)
-    frame.BackgroundTransparency = 1
-    local lbl = Instance.new("TextLabel", frame) lbl.Size = UDim2.new(1,-70,0,20)
-    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.Font = Enum.Font.Gotham lbl.TextSize = 14
-    lbl.TextColor3 = Colors.Text lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Position = UDim2.new(0,5,0,0)
-    local val = Instance.new("TextLabel", frame) val.Size = UDim2.new(0,50,0,20) val.Position = UDim2.new(1,-55,0,0)
-    val.BackgroundTransparency = 1 val.Text = tostring(default) val.Font = Enum.Font.GothamBold
-    val.TextSize = 14 val.TextColor3 = Colors.Accent val.TextXAlignment = Enum.TextXAlignment.Right
-    local bar = Instance.new("Frame", frame) bar.Size = UDim2.new(1,-15,0,5) bar.Position = UDim2.new(0,5,0,30)
-    bar.BackgroundColor3 = Colors.ToggleOff bar.BorderSizePixel = 0
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
-    local fill = Instance.new("Frame", bar) fill.Size = UDim2.new((default-min)/(max-min),0,1,0)
-    fill.BackgroundColor3 = Colors.Accent fill.BorderSizePixel = 0
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+    local row = Instance.new("Frame", Content)
+    row.Size = UDim2.new(.98, 0, 0, 55)
+    row.BackgroundColor3 = Colors.Panel2
+    row.BorderSizePixel = 0
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    
+    local txt = Instance.new("TextLabel", row)
+    txt.Size = UDim2.new(.7, 0, 0, 22)
+    txt.Position = UDim2.new(0, 15, 0, 5)
+    txt.Text = name
+    txt.TextColor3 = Colors.Text
+    txt.BackgroundTransparency = 1
+    txt.Font = Enum.Font.Gotham
+    txt.TextSize = 14
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local val = Instance.new("TextLabel", row)
+    val.Size = UDim2.new(0, 50, 0, 22)
+    val.Position = UDim2.new(1, -60, 0, 5)
+    val.Text = tostring(default)
+    val.TextColor3 = Colors.Accent
+    val.BackgroundTransparency = 1
+    val.Font = Enum.Font.GothamBold
+    val.TextSize = 14
+    val.TextXAlignment = Enum.TextXAlignment.Right
+    
+    local bar = Instance.new("Frame", row)
+    bar.Size = UDim2.new(1, -30, 0, 5)
+    bar.Position = UDim2.new(0, 15, 0, 35)
+    bar.BackgroundColor3 = Colors.ToggleOff
+    bar.BorderSizePixel = 0
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+    
+    local fill = Instance.new("Frame", bar)
+    fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
+    fill.BackgroundColor3 = Colors.AccentBright
+    fill.BorderSizePixel = 0
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    
     local dragging = false
     bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = true end end)
     UserInput.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
@@ -749,77 +808,139 @@ local function AddSlider(name, min, max, default, callback)
         if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
             local pos = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
             local v = math.floor(min + (max-min) * pos)
-            fill.Size = UDim2.new(pos,0,1,0) val.Text = tostring(v) callback(v)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            val.Text = tostring(v)
+            callback(v)
         end
     end)
 end
 
 local function AddButton(name, callback)
-    local btn = Instance.new("TextButton", Content) btn.Size = UDim2.new(1,-5,0,35)
-    btn.BackgroundColor3 = Colors.Panel2 btn.Text = name btn.Font = Enum.Font.GothamBold btn.TextSize = 13
-    btn.TextColor3 = Colors.Text btn.AutoButtonColor = false btn.BorderSizePixel = 0
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+    local btn = Instance.new("TextButton", Content)
+    btn.Size = UDim2.new(.98, 0, 0, 38)
+    btn.BackgroundColor3 = Colors.Panel3
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.TextColor3 = Colors.Text
+    btn.AutoButtonColor = false
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
     btn.MouseButton1Click:Connect(callback)
 end
 
 local function AddDropdown(name, options, default, callback)
-    local frame = Instance.new("Frame", Content) frame.Size = UDim2.new(1,-5,0,38)
-    frame.BackgroundTransparency = 1
-    local lbl = Instance.new("TextLabel", frame) lbl.Size = UDim2.new(0.4,0,1,0)
-    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.Font = Enum.Font.Gotham lbl.TextSize = 13
-    lbl.TextColor3 = Colors.Text lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Position = UDim2.new(0,5,0,0)
-    local btn = Instance.new("TextButton", frame) btn.Size = UDim2.new(0.6,-10,0,24)
-    btn.Position = UDim2.new(0.4,5,0.5,-12) btn.BackgroundColor3 = Colors.Panel2
-    btn.Text = default.." ▼" btn.Font = Enum.Font.Gotham btn.TextSize = 11
-    btn.TextColor3 = Colors.Text btn.BorderSizePixel = 0
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
+    local row = Instance.new("Frame", Content)
+    row.Size = UDim2.new(.98, 0, 0, 40)
+    row.BackgroundColor3 = Colors.Panel2
+    row.BorderSizePixel = 0
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    
+    local txt = Instance.new("TextLabel", row)
+    txt.Size = UDim2.new(.4, 0, 1, 0)
+    txt.Position = UDim2.new(0, 15, 0, 0)
+    txt.Text = name
+    txt.TextColor3 = Colors.Text
+    txt.BackgroundTransparency = 1
+    txt.Font = Enum.Font.Gotham
+    txt.TextSize = 13
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local btn = Instance.new("TextButton", row)
+    btn.Size = UDim2.new(0.55, -20, 0, 26)
+    btn.Position = UDim2.new(0.45, 5, 0.5, -13)
+    btn.BackgroundColor3 = Colors.Panel3
+    btn.Text = default.." ▼"
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 12
+    btn.TextColor3 = Colors.Text
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
     local idx = 1
     for i, v in ipairs(options) do if v == default then idx = i end end
     btn.MouseButton1Click:Connect(function()
         idx = idx + 1 if idx > #options then idx = 1 end
-        btn.Text = options[idx].." ▼" callback(options[idx])
+        btn.Text = options[idx].." ▼"
+        callback(options[idx])
     end)
 end
 
 local function AddTextbox(name, placeholder, callback)
-    local frame = Instance.new("Frame", Content) frame.Size = UDim2.new(1,-5,0,38)
-    frame.BackgroundTransparency = 1
-    local lbl = Instance.new("TextLabel", frame) lbl.Size = UDim2.new(0.4,0,1,0)
-    lbl.BackgroundTransparency = 1 lbl.Text = name lbl.Font = Enum.Font.Gotham lbl.TextSize = 12
-    lbl.TextColor3 = Colors.Text lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Position = UDim2.new(0,5,0,0)
-    local tb = Instance.new("TextBox", frame) tb.Size = UDim2.new(0.6,-10,0,24)
-    tb.Position = UDim2.new(0.4,5,0.5,-12) tb.BackgroundColor3 = Colors.Panel2
-    tb.Text = "" tb.PlaceholderText = placeholder tb.Font = Enum.Font.Gotham tb.TextSize = 11
-    tb.TextColor3 = Colors.Text tb.PlaceholderColor3 = Colors.TextDim tb.BorderSizePixel = 0
+    local row = Instance.new("Frame", Content)
+    row.Size = UDim2.new(.98, 0, 0, 40)
+    row.BackgroundColor3 = Colors.Panel2
+    row.BorderSizePixel = 0
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    
+    local txt = Instance.new("TextLabel", row)
+    txt.Size = UDim2.new(.4, 0, 1, 0)
+    txt.Position = UDim2.new(0, 15, 0, 0)
+    txt.Text = name
+    txt.TextColor3 = Colors.Text
+    txt.BackgroundTransparency = 1
+    txt.Font = Enum.Font.Gotham
+    txt.TextSize = 13
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local tb = Instance.new("TextBox", row)
+    tb.Size = UDim2.new(0.55, -20, 0, 26)
+    tb.Position = UDim2.new(0.45, 5, 0.5, -13)
+    tb.BackgroundColor3 = Colors.Panel3
+    tb.Text = ""
+    tb.PlaceholderText = placeholder
+    tb.Font = Enum.Font.Gotham
+    tb.TextSize = 12
+    tb.TextColor3 = Colors.Text
+    tb.PlaceholderColor3 = Colors.TextDim
+    tb.BorderSizePixel = 0
     tb.ClearTextOnFocus = false
-    Instance.new("UICorner", tb).CornerRadius = UDim.new(0,4)
+    Instance.new("UICorner", tb).CornerRadius = UDim.new(0, 6)
     tb.FocusLost:Connect(function() callback(tb.Text) end)
 end
 
--- Вкладки в стиле оригинала (кнопки MISC / VISUALS)
-local function AddTab(name, contentFunc)
-    local btn = Instance.new("TextButton", TabPanel)
-    btn.Size = UDim2.new(0, 100, 0, 32)
-    btn.BackgroundColor3 = Colors.Panel2
-    btn.Text = name:upper()
+-- Верхние табы (Home / Info / Discord и т.д.)
+local function AddTopTab(name)
+    local btn = Instance.new("TextButton", TopBar)
+    btn.Size = UDim2.new(0, 110, 0, 35)
+    btn.Text = name
     btn.TextColor3 = Colors.Text
+    btn.BackgroundColor3 = Colors.Panel2
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
+    btn.TextSize = 13
     btn.BorderSizePixel = 0
     btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    return btn
+end
+
+AddTopTab("⚡ Kloud Hub")
+AddTopTab("v4.5")
+
+-- Левые табы (категории)
+local function AddTab(name, contentFunc)
+    local btn = Instance.new("TextButton", LeftScroll)
+    btn.Size = UDim2.new(.95, 0, 0, 38)
+    btn.Text = name
+    btn.TextColor3 = Colors.Text
+    btn.BackgroundColor3 = Colors.Panel3
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    
     Tabs[name] = {btn = btn, func = contentFunc}
     btn.MouseButton1Click:Connect(function()
-        if CurrentTab then 
-            local ct = Tabs[CurrentTab] 
-            ct.btn.BackgroundColor3 = Colors.Panel2
+        if CurrentTab then
+            local ct = Tabs[CurrentTab]
+            ct.btn.BackgroundColor3 = Colors.Panel3
             ct.btn.TextColor3 = Colors.Text
         end
         CurrentTab = name
-        btn.BackgroundColor3 = Colors.Accent
-        btn.TextColor3 = Color3.new(1,1,1)
+        btn.BackgroundColor3 = Colors.AccentBright
+        btn.TextColor3 = Colors.TextBright
+        RightTitle.Text = name
         ClearContent() contentFunc()
     end)
 end-- ============ ВКЛАДКИ ============
@@ -915,17 +1036,20 @@ AddTab("HUD", function()
     end)
 end)
 
-AddTab("Misc", function()
+AddTab("Server", function()
     AddButton("Rejoin", function() game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer) end)
     AddToggle("Anti AFK", Config.AntiAFK, function(v) Config.AntiAFK = v end)
+end)
+
+AddTab("Settings", function()
     AddButton("Destroy GUI", function()
         sg:Destroy() hudGui:Destroy() mobileGui:Destroy() 
         ChamsFolder:Destroy() ESPFolder:Destroy() RoleESPFolder:Destroy() PredictFolder:Destroy()
         SetFullbright(false) SetRemoveFog(false) SetReflections(false) SetGodRays(false) 
         SetMotionBlur(false) SetSoftBlur(false) SetColorFilter(false) SetStrongBloom(false)
         SetFPSBoost(false) StopFly() SetParticles(false)
-        local s = Lighting:FindFirstChild("DPSaturation") if s then s:Destroy() end
-        for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("Sky") and v.Name == "DPSky" then v:Destroy() end end
+        local s = Lighting:FindFirstChild("KHSaturation") if s then s:Destroy() end
+        for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("Sky") and v.Name == "KHSky" then v:Destroy() end end
         Camera.FieldOfView = 70
         local h = GetHum() if h then h.WalkSpeed = 16 h.JumpPower = 50 end
     end)
@@ -933,9 +1057,9 @@ end)
 
 -- Открываем первую вкладку
 task.wait(0.1)
-Tabs["Universal"].btn.BackgroundColor3 = Colors.Accent
-Tabs["Universal"].btn.TextColor3 = Color3.new(1,1,1)
-CurrentTab = "Universal" 
+Tabs["Universal"].btn.BackgroundColor3 = Colors.AccentBright
+Tabs["Universal"].btn.TextColor3 = Colors.TextBright
+CurrentTab = "Universal"
 Tabs["Universal"].func()
 
 CloseBtn.MouseButton1Click:Connect(function() 
@@ -988,7 +1112,7 @@ RunService.RenderStepped:Connect(function()
     if Config.PredictESP then UpdatePredictESP() end
     if Config.FOVLocked and Camera.FieldOfView ~= Config.FOV then Camera.FieldOfView = Config.FOV end
     if Config.MotionBlur then
-        local blur = Lighting:FindFirstChild("DPMotionBlur")
+        local blur = Lighting:FindFirstChild("KHMotionBlur")
         if blur then
             local curr = Camera.CFrame
             local delta = (curr.LookVector - motionLastCF.LookVector).Magnitude
@@ -1190,7 +1314,7 @@ end)
 
 pcall(function() 
     game.StarterGui:SetCore("SendNotification", {
-        Title="Visual Panel v2", 
+        Title="⚡ Kloud Hub 3D", 
         Text=IS_MOBILE and "Mobile mode ready!" or "Loaded! RightShift = hide", 
         Duration=5
     }) 
